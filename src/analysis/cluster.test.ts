@@ -33,22 +33,36 @@ describe("clusterIssues", () => {
     }
   });
 
-  it("cluster name is a representative keyword or bigram", () => {
+  it("cluster name prefers bigrams over unigrams", () => {
     const clusters = clusterIssues(sampleIssues);
 
-    // Auth cluster should have a name related to "auth" or "auth middleware"
+    // Auth cluster should be named "auth middleware" (bigram), not just "auth"
     const authCluster = clusters.find((c) =>
       c.issues.some((i) => i.number === 1),
     );
     expect(authCluster).toBeDefined();
-    expect(authCluster!.name).toMatch(/auth|middleware/i);
+    expect(authCluster!.name).toBe("auth middleware");
 
-    // Dark mode cluster should reference "dark mode"
+    // Dark mode cluster should be named "dark mode" (bigram)
     const darkCluster = clusters.find((c) =>
       c.issues.some((i) => i.number === 6),
     );
     expect(darkCluster).toBeDefined();
-    expect(darkCluster!.name).toMatch(/dark\s*mode/i);
+    expect(darkCluster!.name).toBe("dark mode");
+
+    // Memory leak cluster should be named "memory leak" (bigram)
+    const memoryCluster = clusters.find((c) =>
+      c.issues.some((i) => i.number === 10),
+    );
+    expect(memoryCluster).toBeDefined();
+    expect(memoryCluster!.name).toBe("memory leak");
+
+    // TypeScript types cluster should be named "typescript types" (bigram)
+    const tsCluster = clusters.find((c) =>
+      c.issues.some((i) => i.number === 13),
+    );
+    expect(tsCluster).toBeDefined();
+    expect(tsCluster!.name).toBe("typescript types");
   });
 
   it("merges small clusters (<2 issues) into 'other'", () => {

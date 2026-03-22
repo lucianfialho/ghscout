@@ -165,6 +165,7 @@ export function clusterIssues(issues: Issue[]): Cluster[] {
   }
 
   // Step 5: Merge small clusters (<2 issues) into "other"
+  // Then relabel each cluster with its most representative bigram
   const clusters: Cluster[] = [];
   const otherIssues: Issue[] = [];
 
@@ -172,7 +173,8 @@ export function clusterIssues(issues: Issue[]): Cluster[] {
     if (groupIssues.length < 2) {
       otherIssues.push(...groupIssues);
     } else {
-      clusters.push(buildCluster(name, groupIssues));
+      const relabeledName = pickBigramLabel(name, groupIssues);
+      clusters.push(buildCluster(relabeledName, groupIssues));
     }
   }
 
@@ -187,6 +189,41 @@ export function clusterIssues(issues: Issue[]): Cluster[] {
   });
 
   return clusters;
+}
+
+/**
+ * Pick the best bigram label for a cluster.
+ * Collects all bigrams from every issue in the cluster, counts frequency,
+ * and returns the most common bigram if it appears >= 2 times.
+ * Otherwise keeps the original (unigram) name.
+ */
+function pickBigramLabel(currentName: string, issues: Issue[]): string {
+  // If the current name is already a bigram (contains a space), keep it
+  if (currentName.includes(" ")) return currentName;
+
+  const bigramCounts = new Map<string, number>();
+  for (const issue of issues) {
+    const tokens = tokenizeTitle(issue.title);
+    const bigrams = extractBigrams(tokens);
+    const seen = new Set<string>();
+    for (const bigram of bigrams) {
+      if (!seen.has(bigram)) {
+        seen.add(bigram);
+        bigramCounts.set(bigram, (bigramCounts.get(bigram) ?? 0) + 1);
+      }
+    }
+  }
+
+  let bestBigram = "";
+  let bestCount = 0;
+  for (const [bigram, count] of bigramCounts) {
+    if (count > bestCount) {
+      bestCount = count;
+      bestBigram = bigram;
+    }
+  }
+
+  return bestCount >= 2 ? bestBigram : currentName;
 }
 
 function buildCluster(name: string, issues: Issue[]): Cluster {

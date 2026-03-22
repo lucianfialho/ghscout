@@ -14,18 +14,21 @@ function makeClusters(count: number): ScoredCluster[] {
         title: `Issue A in cluster ${i + 1}`,
         htmlUrl: `https://github.com/owner/repo/issues/${1000 + i * 10}`,
         reactions: { total: 50 - i * 5 },
+        createdAt: "2025-06-15T00:00:00Z",
       },
       {
         number: 1001 + i * 10,
         title: `Issue B in cluster ${i + 1}`,
         htmlUrl: `https://github.com/owner/repo/issues/${1001 + i * 10}`,
         reactions: { total: 30 - i * 3 },
+        createdAt: "2025-10-01T00:00:00Z",
       },
       {
         number: 1002 + i * 10,
         title: `Issue C in cluster ${i + 1}`,
         htmlUrl: `https://github.com/owner/repo/issues/${1002 + i * 10}`,
         reactions: { total: 10 },
+        createdAt: "2026-01-01T00:00:00Z",
       },
     ],
     issueCount: 3,
@@ -78,7 +81,7 @@ describe("formatScanResult", () => {
       expect(lines[0]).toContain("Cluster");
       expect(lines[0]).toContain("Issues");
       expect(lines[0]).toContain("Reactions");
-      expect(lines[0]).toContain("Top Issue URL");
+      expect(lines[0]).toContain("Top Issue");
 
       // Separator line
       expect(lines[1]).toMatch(/^-+/);
@@ -91,6 +94,23 @@ describe("formatScanResult", () => {
       expect(lines[3]).toContain("2");
       expect(lines[3]).toContain("72");
       expect(lines[3]).toContain("cluster-2");
+    });
+
+    it("shows truncated title in Top Issue column", () => {
+      const clusters = makeClusters(1);
+      const result = formatScanResult(clusters, { format: "table" });
+      // Top issue by reactions is "Issue A in cluster 1" (50 reactions)
+      expect(result).toContain("Issue A in cluster 1");
+      // Should NOT contain full URL in table anymore
+      expect(result).not.toContain("https://github.com/owner/repo/issues/");
+    });
+
+    it("truncates long titles to 30 chars in table", () => {
+      const clusters = makeClusters(1);
+      clusters[0].issues[0].title =
+        "A very long title that should definitely be truncated";
+      const result = formatScanResult(clusters, { format: "table" });
+      expect(result).toContain("A very long title that should ...");
     });
 
     it("handles empty clusters", () => {
@@ -145,6 +165,25 @@ describe("formatScanResult", () => {
         "https://github.com/owner/repo/issues/1001"
       );
       expect(result).toContain("(showing top 2 issues by reactions)");
+    });
+
+    it("shows issue titles with reaction count and age", () => {
+      const clusters = makeClusters(1);
+      const result = formatScanResult(clusters, { format: "pretty" });
+      // Top issue: "Issue A in cluster 1" with 50 reactions
+      expect(result).toContain("[50 👍] Issue A in cluster 1");
+      // Second issue: "Issue B in cluster 1" with 30 reactions
+      expect(result).toContain("[30 👍] Issue B in cluster 1");
+      // Age should be present (ends with "d)")
+      expect(result).toMatch(/\[\d+ 👍\] .+? \(\d+d\)/);
+    });
+
+    it("truncates long titles to 70 chars", () => {
+      const clusters = makeClusters(1);
+      clusters[0].issues[0].title =
+        "This is a very long issue title that should be truncated because it exceeds seventy characters limit";
+      const result = formatScanResult(clusters, { format: "pretty" });
+      expect(result).toContain("This is a very long issue title that should be truncated because it ex...");
     });
 
     it("includes ANSI color codes when NO_COLOR is not set", () => {

@@ -22,6 +22,7 @@ const GITHUB_STOPWORDS = new Set([
   'function', 'class', 'import', 'export', 'default', 'config', 'build',
   'doesn', 'don', 'isn', 'wasn', 'won', 'shouldn', 'couldn', 'hasn',
   'working', 'works', 'happen', 'happens', 'happening', 'started', 'start',
+  'react', 'vue', 'svelte', 'angular', 'node', 'webpack', 'vite',
 ]);
 
 const STOPWORDS = new Set([...ENGLISH_STOPWORDS, ...GITHUB_STOPWORDS]);

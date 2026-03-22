@@ -159,6 +159,176 @@ describe("GitHubClient", () => {
     });
   });
 
+  describe("search rate limiting", () => {
+    it("tracks search rate limit separately for /search/ URLs", async () => {
+      const stderrSpy = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+
+      // First call: non-search URL with low general rate limit
+      fetchSpy.mockResolvedValueOnce(
+        mockFetchResponse({ id: 1 }, {
+          "x-ratelimit-limit": "5000",
+          "x-ratelimit-remaining": "4999",
+        }),
+      );
+      // Second call: search URL with healthy search rate limit
+      fetchSpy.mockResolvedValueOnce(
+        mockFetchResponse({ items: [] }, {
+          "x-ratelimit-limit": "30",
+          "x-ratelimit-remaining": "25",
+        }),
+      );
+
+      const client = new GitHubClient("token");
+      await client.get("https://api.github.com/repos/foo/bar");
+      await client.get("https://api.github.com/search/issues?q=test");
+
+      // Should not warn since search remaining (25) is >= 5
+      const searchWarnings = stderrSpy.mock.calls.filter(
+        (c) => String(c[0]).includes("Search rate limit"),
+      );
+      expect(searchWarnings).toHaveLength(0);
+
+      stderrSpy.mockRestore();
+    });
+
+    it("warns when search rate limit is low (< 5 remaining)", async () => {
+      const stderrSpy = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+
+      // First search call returns low remaining
+      fetchSpy.mockResolvedValueOnce(
+        mockFetchResponse({ items: [] }, {
+          "x-ratelimit-limit": "30",
+          "x-ratelimit-remaining": "3",
+        }),
+      );
+      // Second search call — should trigger warning before making the request
+      fetchSpy.mockResolvedValueOnce(
+        mockFetchResponse({ items: [] }, {
+          "x-ratelimit-limit": "30",
+          "x-ratelimit-remaining": "2",
+        }),
+      );
+
+      const client = new GitHubClient("token");
+      await client.get("https://api.github.com/search/issues?q=test1");
+      await client.get("https://api.github.com/search/issues?q=test2");
+
+      const searchWarnings = stderrSpy.mock.calls.filter(
+        (c) => String(c[0]).includes("Search rate limit low"),
+      );
+      expect(searchWarnings.length).toBeGreaterThanOrEqual(1);
+      expect(String(searchWarnings[0][0])).toContain("3/30 remaining");
+
+      stderrSpy.mockRestore();
+    });
+
+    it("waits when search rate limit is exhausted", async () => {
+      vi.useFakeTimers();
+      const stderrSpy = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+
+      const nowSec = Math.floor(Date.now() / 1000);
+
+      // First call exhausts the search rate limit
+      fetchSpy.mockResolvedValueOnce(
+        mockFetchResponse({ items: [] }, {
+          "x-ratelimit-limit": "30",
+          "x-ratelimit-remaining": "0",
+          "x-ratelimit-reset": String(nowSec + 30),
+        }),
+      );
+      // Second call after wait
+      fetchSpy.mockResolvedValueOnce(
+        mockFetchResponse({ items: [] }, {
+          "x-ratelimit-limit": "30",
+          "x-ratelimit-remaining": "29",
+        }),
+      );
+
+      const client = new GitHubClient("token");
+      await client.get("https://api.github.com/search/issues?q=test1");
+
+      // Start the second call (it will wait on setTimeout)
+      const secondCall = client.get("https://api.github.com/search/issues?q=test2");
+
+      // Advance timers to resolve the wait
+      await vi.advanceTimersByTimeAsync(35000);
+
+      await secondCall;
+
+      const exhaustedWarnings = stderrSpy.mock.calls.filter(
+        (c) => String(c[0]).includes("Search rate limit exhausted"),
+      );
+      expect(exhaustedWarnings.length).toBeGreaterThanOrEqual(1);
+
+      stderrSpy.mockRestore();
+      vi.useRealTimers();
+    });
+
+    it("enforces delay between consecutive search requests", async () => {
+      fetchSpy.mockResolvedValue(
+        mockFetchResponse({ items: [] }, {
+          "x-ratelimit-limit": "30",
+          "x-ratelimit-remaining": "28",
+        }),
+      );
+
+      const client = new GitHubClient("token");
+      const start = Date.now();
+      await client.get("https://api.github.com/search/issues?q=test1");
+      await client.get("https://api.github.com/search/issues?q=test2");
+      const elapsed = Date.now() - start;
+
+      // Second search should have been delayed by ~2s
+      expect(elapsed).toBeGreaterThanOrEqual(1900);
+    });
+
+    it("does not delay non-search requests", async () => {
+      fetchSpy.mockResolvedValue(
+        mockFetchResponse({ id: 1 }, {
+          "x-ratelimit-limit": "5000",
+          "x-ratelimit-remaining": "4999",
+        }),
+      );
+
+      const client = new GitHubClient("token");
+      const start = Date.now();
+      await client.get("https://api.github.com/repos/foo/bar");
+      await client.get("https://api.github.com/repos/foo/baz");
+      const elapsed = Date.now() - start;
+
+      // Non-search requests should be fast
+      expect(elapsed).toBeLessThan(500);
+    });
+
+    it("does not throw RateLimitError for exhausted search limit (waits instead)", async () => {
+      // Search endpoint with 0 remaining should wait, not throw
+      fetchSpy.mockResolvedValueOnce(
+        mockFetchResponse({ items: [] }, {
+          "x-ratelimit-limit": "30",
+          "x-ratelimit-remaining": "0",
+          "x-ratelimit-reset": String(Math.floor(Date.now() / 1000) + 2),
+        }),
+      );
+      fetchSpy.mockResolvedValueOnce(
+        mockFetchResponse({ items: [] }, {
+          "x-ratelimit-limit": "30",
+          "x-ratelimit-remaining": "29",
+        }),
+      );
+
+      const stderrSpy = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+      const client = new GitHubClient("token");
+
+      // First call should succeed (trackSearchRateLimit records 0 remaining but doesn't throw)
+      await client.get("https://api.github.com/search/issues?q=test1");
+      // Second call should wait and succeed, not throw
+      await client.get("https://api.github.com/search/issues?q=test2");
+
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      stderrSpy.mockRestore();
+    });
+  });
+
   describe("getPaginated()", () => {
     it("follows Link header for next pages", async () => {
       fetchSpy

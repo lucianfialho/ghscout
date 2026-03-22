@@ -5,6 +5,7 @@ export interface ScoredCluster {
     title: string;
     htmlUrl: string;
     reactions: { total: number };
+    createdAt: string;
   }>;
   issueCount: number;
   totalReactions: number;
@@ -69,21 +70,23 @@ function formatJson(clusters: ScoredCluster[], top?: number): string {
 function formatTable(clusters: ScoredCluster[], top?: number): string {
   const items = sliceClusters(clusters, top);
 
-  const headers = ["#", "Score", "Cluster", "Issues", "Reactions", "Top Issue URL"];
+  const headers = ["#", "Score", "Cluster", "Issues", "Reactions", "Top Issue"];
   const rows = items.map((cluster, i) => {
-    const topIssue =
-      cluster.issues.length > 0
-        ? cluster.issues
-            .slice()
-            .sort((a, b) => b.reactions.total - a.reactions.total)[0].htmlUrl
-        : "";
+    let topIssueTitle = "";
+    if (cluster.issues.length > 0) {
+      const best = cluster.issues
+        .slice()
+        .sort((a, b) => b.reactions.total - a.reactions.total)[0];
+      topIssueTitle =
+        best.title.length > 30 ? best.title.slice(0, 30) + "..." : best.title;
+    }
     return [
       String(i + 1),
       String(cluster.score),
       cluster.name,
       String(cluster.issueCount),
       String(cluster.totalReactions),
-      topIssue,
+      topIssueTitle,
     ];
   });
 
@@ -132,7 +135,17 @@ function formatPretty(clusters: ScoredCluster[], top?: number): string {
       .slice(0, 2);
 
     for (const issue of sortedIssues) {
-      lines.push(c(DIM, `   → ${issue.htmlUrl}`));
+      const truncTitle =
+        issue.title.length > 70
+          ? issue.title.slice(0, 70) + "..."
+          : issue.title;
+      const ageDays = Math.floor(
+        (Date.now() - new Date(issue.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      lines.push(
+        c(DIM, `   → [${issue.reactions.total} 👍] ${truncTitle} (${ageDays}d)`)
+      );
+      lines.push(c(DIM, `     ${issue.htmlUrl}`));
     }
 
     if (cluster.issues.length > 2) {
