@@ -17,10 +17,9 @@
   </header>
 
   <div class="container">
-    <div class="filters">
-      <select id="topic-filter">
-        <option value="all">All topics</option>
-      </select>
+    <nav id="breadcrumb" class="breadcrumb"></nav>
+
+    <div id="filters" class="filters" style="display:none">
       <select id="sort-by">
         <option value="score">Sort by score</option>
         <option value="reactions">Sort by reactions</option>
@@ -31,16 +30,14 @@
       <span id="min-score-label">Min score: 0</span>
     </div>
 
-    <div id="clusters" class="clusters"></div>
-
-    <div id="empty" class="empty" style="display:none">
-      No clusters match your filters.
-    </div>
+    <div id="content"></div>
   </div>
 
   <footer>
     <div class="container">
-      Powered by <a href="https://github.com/lucianfialho/ghscout">ghscout</a> — evidence engine for product discovery from GitHub issues
+      <a href="https://github.com/lucianfialho/ghscout">GitHub</a> ·
+      Install: <code>npx ghscout scan vercel/next.js</code> ·
+      Built by <a href="https://github.com/lucianfialho">Lucian Fialho</a>
     </div>
   </footer>
 
