@@ -23,6 +23,10 @@ const GITHUB_STOPWORDS = new Set([
   'doesn', 'don', 'isn', 'wasn', 'won', 'shouldn', 'couldn', 'hasn',
   'working', 'works', 'happen', 'happens', 'happening', 'started', 'start',
   'react', 'vue', 'svelte', 'angular', 'node', 'webpack', 'vite',
+  'allow', 'unable', 'enable', 'disable', 'enh', 'feat', 'enhancement',
+  'should', 'must', 'when', 'after', 'while', 'during', 'possible',
+  'example', 'change', 'changes', 'move', 'create', 'remove', 'show',
+  'hide', 'open', 'close', 'option', 'options', 'setting', 'settings',
 ]);
 
 const STOPWORDS = new Set([...ENGLISH_STOPWORDS, ...GITHUB_STOPWORDS]);
