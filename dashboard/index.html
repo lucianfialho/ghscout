@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ghscout — Product Opportunity Radar</title>
+  <meta name="description" content="Open-source product opportunity radar powered by GitHub issue analysis. Updated weekly.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>ghscout</h1>
+      <p class="subtitle">Product Opportunity Radar — from GitHub Issues</p>
+      <p class="meta" id="meta">Loading...</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="filters">
+      <select id="topic-filter">
+        <option value="all">All topics</option>
+      </select>
+      <select id="sort-by">
+        <option value="score">Sort by score</option>
+        <option value="reactions">Sort by reactions</option>
+        <option value="issues">Sort by issue count</option>
+        <option value="frustration">Sort by frustration</option>
+      </select>
+      <input type="range" id="min-score" min="0" max="100" value="0">
+      <span id="min-score-label">Min score: 0</span>
+    </div>
+
+    <div id="clusters" class="clusters"></div>
+
+    <div id="empty" class="empty" style="display:none">
+      No clusters match your filters.
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      Powered by <a href="https://github.com/lucianfialho/ghscout">ghscout</a> — evidence engine for product discovery from GitHub issues
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

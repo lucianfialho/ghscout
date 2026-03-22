@@ -1,0 +1,6 @@
+{
+  "topics": ["developer-tools", "cli", "testing", "ai", "devops", "database"],
+  "minStars": 500,
+  "limit": 200,
+  "top": 20
+}

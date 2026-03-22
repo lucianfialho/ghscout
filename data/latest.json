@@ -1,0 +1,500 @@
+{
+  "date": "2026-03-22",
+  "topics": [
+    "developer-tools"
+  ],
+  "totalClusters": 10,
+  "clusters": [
+    {
+      "name": "st dataframe",
+      "issues": [
+        {
+          "title": "Too much blank space wasted at the top of each page -- allow `st.set_page_config( margin_top = 20 )`",
+          "reactions": {
+            "thumbsUp": 96,
+            "thumbsDown": 0,
+            "total": 96
+          },
+          "htmlUrl": "https://github.com/streamlit/streamlit/issues/6336",
+          "createdAt": "2023-03-18T15:50:42Z"
+        },
+        {
+          "title": "Set `[auth]` secrets config from environment variables or through `st.login`",
+          "reactions": {
+            "thumbsUp": 95,
+            "thumbsDown": 0,
+            "total": 95
+          },
+          "htmlUrl": "https://github.com/streamlit/streamlit/issues/10543",
+          "createdAt": "2025-02-27T15:47:19Z"
+        },
+        {
+          "title": "`st.cache_resource` and `st.cache_data` should support async functions (coroutines)",
+          "reactions": {
+            "thumbsUp": 92,
+            "thumbsDown": 0,
+            "total": 98
+          },
+          "htmlUrl": "https://github.com/streamlit/streamlit/issues/8308",
+          "createdAt": "2024-03-15T15:21:16Z"
+        }
+      ],
+      "issueCount": 71,
+      "totalReactions": 2312,
+      "labels": [
+        "type:enhancement"
+      ],
+      "score": 97,
+      "breakdown": {
+        "demand": 100,
+        "frequency": 100,
+        "frustration": 81,
+        "marketSize": 100,
+        "gap": 100
+      },
+      "topic": "developer-tools"
+    },
+    {
+      "name": "bruno cli",
+      "issues": [
+        {
+          "title": "Import Open API / Swagger 2.x Spec into Bruno",
+          "reactions": {
+            "thumbsUp": 120,
+            "thumbsDown": 0,
+            "total": 131
+          },
+          "htmlUrl": "https://github.com/usebruno/bruno/issues/81",
+          "createdAt": "2023-01-29T14:10:41Z"
+        },
+        {
+          "title": "Bruno Plugins/Extensions",
+          "reactions": {
+            "thumbsUp": 40,
+            "thumbsDown": 0,
+            "total": 40
+          },
+          "htmlUrl": "https://github.com/usebruno/bruno/issues/1529",
+          "createdAt": "2024-02-06T17:26:53Z"
+        },
+        {
+          "title": "[Feature Request] draft request",
+          "reactions": {
+            "thumbsUp": 30,
+            "thumbsDown": 0,
+            "total": 30
+          },
+          "htmlUrl": "https://github.com/usebruno/bruno/issues/2919",
+          "createdAt": "2024-08-26T07:22:51Z"
+        }
+      ],
+      "issueCount": 37,
+      "totalReactions": 461,
+      "labels": [
+        "enhancement"
+      ],
+      "score": 61,
+      "breakdown": {
+        "demand": 19,
+        "frequency": 51,
+        "frustration": 85,
+        "marketSize": 100,
+        "gap": 100
+      },
+      "topic": "developer-tools"
+    },
+    {
+      "name": "sandbox creation",
+      "issues": [
+        {
+          "title": "[CLI] Live File Synchronization (`daytona sandbox sync`)",
+          "reactions": {
+            "thumbsUp": 2,
+            "thumbsDown": 0,
+            "total": 2
+          },
+          "htmlUrl": "https://github.com/daytonaio/daytona/issues/3309",
+          "createdAt": "2026-01-08T12:20:50Z"
+        },
+        {
+          "title": "Decouple File System / Volume from Sandbox",
+          "reactions": {
+            "thumbsUp": 2,
+            "thumbsDown": 0,
+            "total": 2
+          },
+          "htmlUrl": "https://github.com/daytonaio/daytona/issues/2310",
+          "createdAt": "2025-08-23T07:50:20Z"
+        },
+        {
+          "title": "Better message on reason why Sandbox Build Failed",
+          "reactions": {
+            "thumbsUp": 2,
+            "thumbsDown": 0,
+            "total": 2
+          },
+          "htmlUrl": "https://github.com/daytonaio/daytona/issues/2097",
+          "createdAt": "2025-07-01T18:10:23Z"
+        }
+      ],
+      "issueCount": 44,
+      "totalReactions": 13,
+      "labels": [],
+      "score": 60,
+      "breakdown": {
+        "demand": 1,
+        "frequency": 61,
+        "frustration": 100,
+        "marketSize": 100,
+        "gap": 100
+      },
+      "topic": "developer-tools"
+    },
+    {
+      "name": "generating pdf",
+      "issues": [
+        {
+          "title": "Headless PDF printing inconsistent page width and height",
+          "reactions": {
+            "thumbsUp": 90,
+            "thumbsDown": 0,
+            "total": 90
+          },
+          "htmlUrl": "https://github.com/puppeteer/puppeteer/issues/2278",
+          "createdAt": "2018-03-28T15:01:32Z"
+        },
+        {
+          "title": "Detect sound",
+          "reactions": {
+            "thumbsUp": 70,
+            "thumbsDown": 0,
+            "total": 70
+          },
+          "htmlUrl": "https://github.com/puppeteer/puppeteer/issues/516",
+          "createdAt": "2017-08-24T06:58:47Z"
+        },
+        {
+          "title": "Support ServiceWorkers",
+          "reactions": {
+            "thumbsUp": 21,
+            "thumbsDown": 0,
+            "total": 21
+          },
+          "htmlUrl": "https://github.com/puppeteer/puppeteer/issues/2634",
+          "createdAt": "2018-05-31T05:38:38Z"
+        }
+      ],
+      "issueCount": 32,
+      "totalReactions": 248,
+      "labels": [
+        "P3",
+        "confirmed",
+        "feature"
+      ],
+      "score": 54,
+      "breakdown": {
+        "demand": 11,
+        "frequency": 43,
+        "frustration": 67,
+        "marketSize": 100,
+        "gap": 100
+      },
+      "topic": "developer-tools"
+    },
+    {
+      "name": "allow streamlit",
+      "issues": [
+        {
+          "title": "Streamlit should have support for Internationalization (i18n)",
+          "reactions": {
+            "thumbsUp": 130,
+            "thumbsDown": 0,
+            "total": 151
+          },
+          "htmlUrl": "https://github.com/streamlit/streamlit/issues/1353",
+          "createdAt": "2020-04-15T19:15:12Z"
+        },
+        {
+          "title": "Add support for multi-threading/multi-processing in Streamlit",
+          "reactions": {
+            "thumbsUp": 108,
+            "thumbsDown": 0,
+            "total": 108
+          },
+          "htmlUrl": "https://github.com/streamlit/streamlit/issues/8490",
+          "createdAt": "2024-04-12T14:37:28Z"
+        },
+        {
+          "title": "Make Streamlit easy to deploy as a standalone executable (e.g. PyInstaller, Electron)",
+          "reactions": {
+            "thumbsUp": 82,
+            "thumbsDown": 0,
+            "total": 90
+          },
+          "htmlUrl": "https://github.com/streamlit/streamlit/issues/1370",
+          "createdAt": "2020-04-21T00:11:55Z"
+        }
+      ],
+      "issueCount": 17,
+      "totalReactions": 748,
+      "labels": [
+        "type:enhancement"
+      ],
+      "score": 54,
+      "breakdown": {
+        "demand": 31,
+        "frequency": 22,
+        "frustration": 64,
+        "marketSize": 100,
+        "gap": 100
+      },
+      "topic": "developer-tools"
+    },
+    {
+      "name": "ai agent",
+      "issues": [
+        {
+          "title": "【开源自荐】Infographic：AI 友好的声明式信息图可视化引擎",
+          "reactions": {
+            "thumbsUp": 2,
+            "thumbsDown": 0,
+            "total": 2
+          },
+          "htmlUrl": "https://github.com/GitHubDaily/GitHubDaily/issues/702",
+          "createdAt": "2025-12-29T08:44:45Z"
+        },
+        {
+          "title": "【开源自荐】MiroFish：上传任意小说或报告，全自动根据剧情搭建“AI数字小世界”进行演绎",
+          "reactions": {
+            "thumbsUp": 2,
+            "thumbsDown": 0,
+            "total": 2
+          },
+          "htmlUrl": "https://github.com/GitHubDaily/GitHubDaily/issues/701",
+          "createdAt": "2025-12-26T02:09:19Z"
+        },
+        {
+          "title": "【教程自荐】《AI精准操作手册：从Prompt工程到认知导航》",
+          "reactions": {
+            "thumbsUp": 1,
+            "thumbsDown": 0,
+            "total": 1
+          },
+          "htmlUrl": "https://github.com/GitHubDaily/GitHubDaily/issues/655",
+          "createdAt": "2025-10-22T09:08:01Z"
+        }
+      ],
+      "issueCount": 42,
+      "totalReactions": 6,
+      "labels": [],
+      "score": 53,
+      "breakdown": {
+        "demand": 0,
+        "frequency": 58,
+        "frustration": 58,
+        "marketSize": 100,
+        "gap": 100
+      },
+      "topic": "developer-tools"
+    },
+    {
+      "name": "files folders",
+      "issues": [
+        {
+          "title": "Feature: Implement UI for using Files as open file dialog",
+          "reactions": {
+            "thumbsUp": 17,
+            "thumbsDown": 0,
+            "total": 17
+          },
+          "htmlUrl": "https://github.com/files-community/Files/issues/6314",
+          "createdAt": "2021-10-05T17:55:51Z"
+        },
+        {
+          "title": "Feature: Support right click context menu when dragging files/folders",
+          "reactions": {
+            "thumbsUp": 15,
+            "thumbsDown": 0,
+            "total": 20
+          },
+          "htmlUrl": "https://github.com/files-community/Files/issues/1396",
+          "createdAt": "2020-07-11T18:11:00Z"
+        },
+        {
+          "title": "Feature: Add Windows File Explorer detail layout columns to Files",
+          "reactions": {
+            "thumbsUp": 8,
+            "thumbsDown": 0,
+            "total": 10
+          },
+          "htmlUrl": "https://github.com/files-community/Files/issues/8366",
+          "createdAt": "2022-02-15T10:05:50Z"
+        }
+      ],
+      "issueCount": 31,
+      "totalReactions": 85,
+      "labels": [],
+      "score": 52,
+      "breakdown": {
+        "demand": 3,
+        "frequency": 42,
+        "frustration": 71,
+        "marketSize": 100,
+        "gap": 100
+      },
+      "topic": "developer-tools"
+    },
+    {
+      "name": "web ui",
+      "issues": [
+        {
+          "title": "Simple directions for dockerless install",
+          "reactions": {
+            "thumbsUp": 24,
+            "thumbsDown": 0,
+            "total": 24
+          },
+          "htmlUrl": "https://github.com/OpenHands/OpenHands/issues/8632",
+          "createdAt": "2025-05-22T13:28:44Z"
+        },
+        {
+          "title": "[PRD] Fork a Conversation",
+          "reactions": {
+            "thumbsUp": 6,
+            "thumbsDown": 0,
+            "total": 6
+          },
+          "htmlUrl": "https://github.com/OpenHands/OpenHands/issues/8560",
+          "createdAt": "2025-05-17T19:08:17Z"
+        },
+        {
+          "title": "[Feature] Switching models within a conversation",
+          "reactions": {
+            "thumbsUp": 5,
+            "thumbsDown": 0,
+            "total": 5
+          },
+          "htmlUrl": "https://github.com/OpenHands/OpenHands/issues/9887",
+          "createdAt": "2025-07-24T15:37:01Z"
+        }
+      ],
+      "issueCount": 24,
+      "totalReactions": 44,
+      "labels": [
+        "cloud",
+        "enhancement",
+        "proposal"
+      ],
+      "score": 50,
+      "breakdown": {
+        "demand": 2,
+        "frequency": 32,
+        "frustration": 78,
+        "marketSize": 100,
+        "gap": 100
+      },
+      "topic": "developer-tools"
+    },
+    {
+      "name": "snapshot builds",
+      "issues": [
+        {
+          "title": "Allow snapshot renaming via the API/SDK",
+          "reactions": {
+            "thumbsUp": 2,
+            "thumbsDown": 0,
+            "total": 2
+          },
+          "htmlUrl": "https://github.com/daytonaio/daytona/issues/2199",
+          "createdAt": "2025-07-25T10:44:18Z"
+        },
+        {
+          "title": "Add .dockerignore Support for Snapshot Builds",
+          "reactions": {
+            "thumbsUp": 1,
+            "thumbsDown": 0,
+            "total": 1
+          },
+          "htmlUrl": "https://github.com/daytonaio/daytona/issues/2600",
+          "createdAt": "2025-10-08T09:52:14Z"
+        },
+        {
+          "title": "Screen recording fails on default snapshot — ffmpeg not installed",
+          "reactions": {
+            "thumbsUp": 0,
+            "thumbsDown": 0,
+            "total": 0
+          },
+          "htmlUrl": "https://github.com/daytonaio/daytona/issues/3921",
+          "createdAt": "2026-02-25T18:27:30Z"
+        }
+      ],
+      "issueCount": 24,
+      "totalReactions": 3,
+      "labels": [],
+      "score": 50,
+      "breakdown": {
+        "demand": 0,
+        "frequency": 32,
+        "frustration": 82,
+        "marketSize": 100,
+        "gap": 100
+      },
+      "topic": "developer-tools"
+    },
+    {
+      "name": "api",
+      "issues": [
+        {
+          "title": "Feature Request: Composition Events (Keyboard API)",
+          "reactions": {
+            "thumbsUp": 3,
+            "thumbsDown": 0,
+            "total": 3
+          },
+          "htmlUrl": "https://github.com/puppeteer/puppeteer/issues/4981",
+          "createdAt": "2019-09-26T13:10:10Z"
+        },
+        {
+          "title": "[Bug]: Crash when Using getDisplayMedia API",
+          "reactions": {
+            "thumbsUp": 1,
+            "thumbsDown": 0,
+            "total": 1
+          },
+          "htmlUrl": "https://github.com/puppeteer/puppeteer/issues/13478",
+          "createdAt": "2025-01-09T00:11:20Z"
+        },
+        {
+          "title": "[feature]: Auto/Live-Sync API Documentation with Codebase Changes",
+          "reactions": {
+            "thumbsUp": 7,
+            "thumbsDown": 0,
+            "total": 7
+          },
+          "htmlUrl": "https://github.com/hoppscotch/hoppscotch/issues/5310",
+          "createdAt": "2025-08-05T16:10:25Z"
+        }
+      ],
+      "issueCount": 21,
+      "totalReactions": 61,
+      "labels": [
+        "P3",
+        "bug",
+        "confirmed",
+        "enhancement",
+        "feature",
+        "upstream"
+      ],
+      "score": 48,
+      "breakdown": {
+        "demand": 3,
+        "frequency": 28,
+        "frustration": 67,
+        "marketSize": 100,
+        "gap": 100
+      },
+      "topic": "developer-tools"
+    }
+  ]
+}
