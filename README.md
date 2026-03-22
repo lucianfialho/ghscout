@@ -2,7 +2,7 @@
 
 Every idea tool mines Reddit. Nobody mines GitHub issues. **ghscout** does.
 
-GitHub issues are the richest source of developer pain: structured reactions (👍 = demand), labels, linked PRs, repo stars, and code context. ghscout scans them at scale, clusters recurring pain patterns, and scores each opportunity so you can find problems worth building a product around.
+GitHub issues are the richest source of developer pain: structured reactions, labels, linked PRs, repo stars, and code context. ghscout scans them at scale, clusters recurring pain patterns, and scores each opportunity.
 
 ## Install
 
@@ -15,137 +15,148 @@ npm install -g ghscout
 
 Requires Node.js 18+. Works without a GitHub token (60 req/h), but set `GITHUB_TOKEN` or use `gh auth` for 5,000 req/h.
 
-## Usage
+## Scan a repo
 
-### Scan a repo for opportunities
+```
+$ ghscout scan vercel/next.js --top 5
 
-```bash
-$ ghscout scan vercel/next.js
+#1 [100/100] server actions
+   Issues: 25 | Reactions: 740 | Labels: bug
+   Demand: 100  Frequency: 100  Frustration: 100  Market: 100  Gap: 100
+   → [65 👍] Unable to import react-dom/server in a server component (1200d)
+     https://github.com/vercel/next.js/issues/43810
+   → [57 👍] Turbopack dev server uses too much RAM and CPU (263d)
+     https://github.com/vercel/next.js/issues/81161
 
-  Scanning vercel/next.js (100 issues, last 90d)...
+#2 [80/100] pages router
+   Issues: 13 | Reactions: 663 | Labels: none
+   Demand: 92  Frequency: 48  Frustration: 67  Market: 100  Gap: 100
+   → [325 👍] App router issue with Framer Motion shared layout animatio... (1051d)
+     https://github.com/vercel/next.js/issues/49279
 
-  #1  Auth middleware breakage          score: 87
-      23 issues · 412 👍 · 8 repos workarounds found
-      → github.com/vercel/next.js/issues/58614
-      → github.com/vercel/next.js/issues/61320
+#3 [58/100] compress false
+   Issues: 10 | Reactions: 258 | Labels: Runtime, bug
+   → [49 👍] middleware matcher should support template literals (899d)
 
-  #2  App Router caching confusion      score: 74
-      18 issues · 289 👍 · 3 rejected PRs
-      → github.com/vercel/next.js/issues/54173
+#4 [54/100] parallel routes
+   Issues: 8 | Reactions: 217 | Labels: bug
+   → [54 👍] Parallel routes are rendered unnecessarily (967d)
 
-  #3  Turbopack HMR failures            score: 61
-      12 issues · 156 👍 · high frustration
-      → github.com/vercel/next.js/issues/59845
-
-  Found 10 opportunity clusters. 3 with score > 60.
+#5 [48/100] image
+   Issues: 8 | Reactions: 203 | Labels: Image (next/image), bug
+   → [46 👍] next/image not properly sizing images (1186d)
 ```
 
-### Scan an org or topic
+## Scan across repos (org or topic)
 
-```bash
-$ ghscout scan --org vercel --min-stars 1000
+```
+$ ghscout scan --topic developer-tools --min-stars 1000 --top 5
 
-  Scanning 14 repos in vercel (min 1000 stars)...
+Scanning 1/10: puppeteer/puppeteer...
+Scanning 2/10: hoppscotch/hoppscotch...
+...
 
-  #1  Edge runtime limitations          score: 82
-      Found in 5/14 repos · 34 issues · 518 👍
-  #2  Monorepo dependency resolution    score: 71
-      Found in 3/14 repos · 19 issues · 247 👍
-  ...
+#1 [97/100] st dataframe
+   Issues: 71 | Reactions: 2312 | Labels: type:enhancement
+   → [99 👍] st.tabs & st.expander - Improve handling of frontend... (746d)
 
-$ ghscout scan --topic devtools --min-stars 500
+#2 [61/100] bruno cli
+   Issues: 37 | Reactions: 461 | Labels: enhancement
+   → [131 👍] Import Open API / Swagger 2.x Spec into Bruno (1147d)
 
-  Scanning 20 repos tagged "devtools"...
-
-  #1  Config file proliferation         score: 79
-      Found in 8/20 repos · 41 issues · 603 👍
-  ...
+#3 [60/100] sandbox creation
+   Issues: 44 | Reactions: 13
+   → [2 👍] Live File Synchronization (daytona sandbox sync) (72d)
 ```
 
-### Deep-dive with evidence
+## AI scoring (via Claude Code)
 
-```bash
-$ ghscout evidence vercel/next.js "auth middleware"
+Uses your existing Claude Code subscription. Zero extra cost, zero API key.
 
-  Evidence: "auth middleware" in vercel/next.js
+```
+$ ghscout scan vercel/next.js --top 3 --ai-score
 
-  Matching issues:        23
-  Total 👍 reactions:     412
-  Unique commenters:      187
-  Oldest unresolved:      14 months
-  Rejected PRs:           3 (with 89 combined 👍)
-  Workarounds found:      8 (next-auth, iron-session, custom edge logic)
+#1 [3/10] server actions  SKIP
+   Issues: 25 | Reactions: 740 | Heuristic: 100/100
+   AI: "These are Next.js framework bugs that need fixes from the
+   core team, not standalone products. No indie tool can meaningfully
+   solve server action cookie reloads or Turbopack memory leaks."
 
-  Top issues by reactions:
-    #58614  Middleware auth redirects fail on prefetch  (148 👍)
-    #61320  Session cookie not forwarded in middleware  (97 👍)
-    #59201  Auth middleware runs twice on soft nav      (72 👍)
+#2 [3/10] pages router  SKIP
+   AI: "Framework-level routing bugs tightly coupled to Next.js
+   internals. Best resolved upstream via PRs to the library itself."
 
-  Verdict: High unmet demand. Multiple workarounds, no merged fix.
+#3 [3/10] parallel routes  SKIP
+   AI: "Parallel routes issues are framework-level bugs in Next.js's
+   routing engine that require fixes within Next.js itself."
 ```
 
-### Discover trending pain
+The AI separates "real pain but not a product opportunity" from "pain you can build a product around." Heuristics gave server actions 100/100. AI gave it 3/10 with a clear rationale.
 
-```bash
-$ ghscout trending --topic cli
+## Deep-dive with evidence
 
-  Trending pain clusters (topic: cli, last 30d)
+```
+$ ghscout evidence vercel/next.js "middleware"
 
-  #1  Shell completion inconsistencies  score: 68
-      9 repos · 22 issues · 198 👍
-  #2  Config migration breaking changes score: 63
-      6 repos · 15 issues · 134 👍
-  #3  Windows path handling             score: 59
-      11 repos · 31 issues · 112 👍
+# Evidence: "middleware" in vercel/next.js
+
+## Summary
+- **17 open issues** across 16 unique authors
+- **1,111 total 👍 reactions** — strong demand signal
+- **20 related PRs**
+
+## Top Issues by Demand
+1. [195 👍] [RFC] Dynamic Routes (#7607)
+   Opened 2468 days ago | 90 comments
+2. [136 👍] trailing slash in link for legit page works for client side...
+   Opened 2740 days ago | 124 comments
 ```
 
-## Scoring Model
+Output is plain markdown — paste it into a pitch deck, README, or blog post.
 
-Each opportunity cluster gets a score from 0-100 based on five signals:
+## Trending pain
 
-| Signal | Weight | What it measures |
-|---|---|---|
-| **Demand** | 30% | Total 👍 reactions and "+1" comments across issues |
-| **Frequency** | 25% | Number of separate issues about the same pain |
-| **Frustration** | 15% | Negative reactions, angry keywords, issue age without resolution |
-| **Market size** | 15% | Combined star count of affected repos (proxy for user base) |
-| **Gap** | 15% | No existing solution: no merged PRs, no packages referenced |
+```
+$ ghscout trending --top 3
 
-## How it works
+#1 [67/100] claude code
+   Issues: 7 | Reactions: 513
+   → [119 👍] Support multiple Connector accounts (29d)
+   → [79 👍] remote-control shows misleading error (25d)
 
-No ML, no AI dependencies. v1 uses deterministic heuristics:
+#2 [58/100] option
+   Issues: 5 | Reactions: 583
+   → [283 👍] Add collision presets (godot-proposals) (25d)
 
-1. Title tokenization + bigram frequency to find recurring themes
-2. Label grouping to cluster related issues
-3. Reaction weighting to amplify importance
-4. Rejected PR detection (closed, not merged, with 👍) for unmet demand signals
-5. Workaround detection from code blocks and package references in comments
-6. Cross-repo deduplication when scanning orgs or topics
+#3 [28/100] code
+   Issues: 3 | Reactions: 263
+   → [118 👍] Add a Shader Code variable previewer (18d)
+```
 
-Results are cached in `~/.cache/ghscout/` (issues: 1h TTL, repo metadata: 24h TTL).
+## Scoring model
 
-## Comparison
+Scores are **relative within each scan** — the top cluster always gets the highest demand score, differentiating clusters from each other.
 
-| | **ghscout** | SaasFinder | GummySearch |
+| Signal | Weight (single-repo) | Weight (cross-repo) | What it measures |
 |---|---|---|---|
-| Data source | GitHub issues | Reddit | Reddit |
-| Structured signals | 👍 reactions, labels, PRs | Upvotes, comments | Upvotes, comments |
-| Developer focus | Built for it | General SaaS | General SaaS |
-| Cross-repo analysis | Yes | N/A | N/A |
-| Rejected PR detection | Yes | N/A | N/A |
-| Price | Free / open source | $29/mo+ | $48/mo+ |
+| **Demand** | 35% | 30% | Total 👍 reactions across issues |
+| **Frequency** | 30% | 25% | Number of separate issues about the same pain |
+| **Frustration** | 20% | 15% | Negative reactions, frustration keywords in title+body, issue age |
+| **Market size** | 0% | 15% | Repo stars (constant in single-repo, varies in cross-repo) |
+| **Gap** | 15% | 15% | Percentage of issues still open (no solution yet) |
 
 ## Autoresearch
 
-ghscout outputs structured JSON (`--output json`) designed to feed into autonomous research loops. Pipe results into AI agents for deeper analysis:
+ghscout ships with a `program.md` — a structured instruction file (inspired by [karpathy/autoresearch](https://github.com/karpathy/autoresearch)) that teaches AI coding agents to run autonomous product discovery sessions.
 
 ```bash
-ghscout scan --topic devtools --output json | your-agent-pipeline
+# In Claude Code, just say:
+"Read program.md and run a research session"
 ```
 
-See `program.md` in the repo for patterns on building autonomous research workflows with ghscout as the evidence layer.
+The agent scans topics, evaluates clusters, and writes findings to `discoveries/YYYY-MM-DD.md` with BUILD/SKIP/WATCH verdicts.
 
-## Options
+## CLI reference
 
 ```
 ghscout scan <repo>              Scan a repo for opportunity clusters
@@ -154,14 +165,30 @@ ghscout scan --topic <topic>     Scan repos by GitHub topic
 ghscout evidence <repo> <query>  Deep-dive on a specific pain topic
 ghscout trending                 Top pain clusters across GitHub
 
-Global:
+Options:
   --output <format>    json | table | pretty (default: pretty)
-  --limit <n>          Max issues per repo (default: 100)
-  --period <duration>  Time window: 7d, 30d, 90d (default: 90d)
+  --json               Shorthand for --output json
+  --ai-score           Score with AI via Claude Code CLI
+  --limit <n>          Max issues per repo (default: 200)
+  --period <duration>  Time window: 7d, 30d, 90d (default: all open)
   --min-stars <n>      Min stars to include (default: 100)
+  --top <n>            Show top N clusters
+  --min-reactions <n>  Min reactions per cluster
   --verbose            Show API calls and rate limits
   --no-cache           Fetch fresh data
 ```
+
+## Comparison
+
+| | **ghscout** | SaasFinder | GummySearch |
+|---|---|---|---|
+| Data source | GitHub issues | Reddit | Reddit |
+| AI scoring | Yes (Claude Code) | No | No |
+| Structured signals | Reactions, labels, PRs | Upvotes, comments | Upvotes, comments |
+| Cross-repo analysis | Yes | N/A | N/A |
+| Rejected PR detection | Yes | N/A | N/A |
+| Evidence packages | Yes (markdown) | No | No |
+| Price | Free / open source | $29/mo+ | $48/mo+ |
 
 ## License
 
