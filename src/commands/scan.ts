@@ -5,7 +5,8 @@ import { detectRejectedDemand, detectWorkarounds } from "../analysis/signals.js"
 import { clusterIssues } from "../analysis/cluster.js";
 import type { Cluster } from "../analysis/cluster.js";
 import { scoreClusters } from "../analysis/scorer.js";
-import { formatScanResult } from "../output/formatters.js";
+import { aiScoreClusters } from "../analysis/ai-scorer.js";
+import { formatScanResult, formatAIScanResult } from "../output/formatters.js";
 import type { OutputOptions } from "../output/formatters.js";
 import type { RepoMeta } from "../github/types.js";
 
@@ -18,6 +19,7 @@ export interface ScanOptions {
   noCache: boolean;
   top: number;
   minReactions: number;
+  aiScore?: boolean;
 }
 
 function verbose(msg: string, enabled: boolean): void {
@@ -82,12 +84,21 @@ export async function runScan(repo: string, opts: ScanOptions): Promise<void> {
       (c) => c.totalReactions >= opts.minReactions,
     );
 
-    // 15. Format output
-    const format = opts.output as OutputOptions["format"];
-    const result = formatScanResult(filtered, { format, top: opts.top });
-
-    // 16. Print result
-    console.log(result);
+    // 15. AI scoring (optional)
+    if (opts.aiScore) {
+      verbose("Running AI scoring via Claude Code CLI...", opts.verbose);
+      const aiScored = await aiScoreClusters(filtered, repoMeta, {
+        verbose: opts.verbose,
+      });
+      const format = opts.output as OutputOptions["format"];
+      const result = formatAIScanResult(aiScored, { format, top: opts.top });
+      console.log(result);
+    } else {
+      // 16. Format output (heuristic)
+      const format = opts.output as OutputOptions["format"];
+      const result = formatScanResult(filtered, { format, top: opts.top });
+      console.log(result);
+    }
 
     // 17. Print rejected PRs section
     if (rejectedPRs.length > 0) {

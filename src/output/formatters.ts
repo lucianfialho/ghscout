@@ -180,3 +180,110 @@ export function formatScanResult(
       return formatPretty(clusters, opts.top);
   }
 }
+
+// --- AI-scored output ---
+
+export interface AIScoredCluster extends ScoredCluster {
+  aiScore: number;
+  verdict: "BUILD" | "SKIP" | "WATCH";
+  rationale: string;
+}
+
+function verdictColor(verdict: string): string {
+  if (verdict === "BUILD") return GREEN;
+  if (verdict === "WATCH") return YELLOW;
+  return RED;
+}
+
+function formatAIPretty(clusters: AIScoredCluster[], top?: number): string {
+  const items = top && top > 0 ? clusters.slice(0, top) : clusters;
+  const lines: string[] = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const cluster = items[i];
+    const rank = `#${i + 1}`;
+    const vColor = verdictColor(cluster.verdict);
+    const scoreText = `[${cluster.aiScore}/10]`;
+
+    lines.push(
+      c(BOLD, `${rank} `) +
+        c(vColor, scoreText) +
+        ` ${cluster.name}` +
+        "  " +
+        c(vColor, cluster.verdict),
+    );
+
+    lines.push(
+      `   Issues: ${cluster.issueCount} | Reactions: ${cluster.totalReactions} | Heuristic: ${cluster.score}/100`,
+    );
+
+    lines.push(c(DIM, `   AI: "${cluster.rationale}"`));
+
+    // Show top 2 issues
+    const sortedIssues = cluster.issues
+      .slice()
+      .sort((a, b) => b.reactions.total - a.reactions.total)
+      .slice(0, 2);
+
+    for (const issue of sortedIssues) {
+      const truncTitle =
+        issue.title.length > 70
+          ? issue.title.slice(0, 70) + "..."
+          : issue.title;
+      const ageDays = Math.floor(
+        (Date.now() - new Date(issue.createdAt).getTime()) / (1000 * 60 * 60 * 24),
+      );
+      lines.push(
+        c(DIM, `   → [${issue.reactions.total} 👍] ${truncTitle} (${ageDays}d)`),
+      );
+      lines.push(c(DIM, `     ${issue.htmlUrl}`));
+    }
+
+    if (i < items.length - 1) {
+      lines.push("");
+    }
+  }
+
+  return lines.join("\n");
+}
+
+export function formatAIScanResult(
+  clusters: AIScoredCluster[],
+  opts: OutputOptions,
+): string {
+  switch (opts.format) {
+    case "json":
+      return JSON.stringify({
+        meta: {
+          scannedAt: new Date().toISOString(),
+          clusterCount: clusters.length,
+          scoringMethod: "ai",
+        },
+        clusters: opts.top && opts.top > 0 ? clusters.slice(0, opts.top) : clusters,
+      });
+    case "table": {
+      const items = opts.top && opts.top > 0 ? clusters.slice(0, opts.top) : clusters;
+      const headers = ["#", "AI", "Verdict", "Cluster", "Issues", "Reactions", "Rationale"];
+      const rows = items.map((cl, i) => [
+        String(i + 1),
+        String(cl.aiScore),
+        cl.verdict,
+        cl.name,
+        String(cl.issueCount),
+        String(cl.totalReactions),
+        cl.rationale.length > 40 ? cl.rationale.slice(0, 40) + "..." : cl.rationale,
+      ]);
+      const widths = headers.map((h, col) =>
+        Math.max(h.length, ...rows.map((r) => r[col].length)),
+      );
+      const headerLine = headers.map((h, i) => h.padEnd(widths[i])).join("  ");
+      const separator = widths.map((w) => "-".repeat(w)).join("  ");
+      const dataLines = rows.map((row) =>
+        row.map((cell, i) => cell.padEnd(widths[i])).join("  "),
+      );
+      return [headerLine, separator, ...dataLines].join("\n");
+    }
+    case "pretty":
+      return formatAIPretty(clusters, opts.top);
+  }
+}

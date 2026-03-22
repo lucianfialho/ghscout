@@ -30,6 +30,7 @@ program
   .option('--top <n>', 'Show only top N clusters', '0')
   .option('--min-reactions <n>', 'Minimum total reactions per cluster', '0')
   .option('--json', 'Shorthand for --output json', false)
+  .option('--ai-score', 'Score opportunities using AI via Claude Code CLI', false)
   .action(async (repo: string | undefined, cmdOpts: Record<string, string | boolean>) => {
     const scanOpts = {
       output: cmdOpts.json === true ? 'json' : cmdOpts.output as string,
@@ -40,6 +41,7 @@ program
       noCache: cmdOpts.cache === false,
       top: parseInt(cmdOpts.top as string, 10) || 0,
       minReactions: parseInt(cmdOpts.minReactions as string, 10) || 0,
+      aiScore: cmdOpts.aiScore === true,
     };
 
     const org = cmdOpts.org as string | undefined;
