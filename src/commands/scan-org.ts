@@ -9,7 +9,8 @@ import { detectRejectedDemand, detectWorkarounds } from "../analysis/signals.js"
 import { clusterIssues } from "../analysis/cluster.js";
 import type { Cluster } from "../analysis/cluster.js";
 import { scoreClusters } from "../analysis/scorer.js";
-import { formatScanResult } from "../output/formatters.js";
+import { aiScoreClusters } from "../analysis/ai-scorer.js";
+import { formatScanResult, formatAIScanResult } from "../output/formatters.js";
 import type { OutputOptions } from "../output/formatters.js";
 import type { RepoMeta } from "../github/types.js";
 import { type ScanOptions, mergeClustersAcrossRepos } from "./scan.js";
@@ -101,10 +102,20 @@ export async function runOrgScan(
       (c) => c.totalReactions >= opts.minReactions,
     );
 
-    // 9. Format and output
-    const format = opts.output as OutputOptions["format"];
-    const result = formatScanResult(filtered, { format, top: opts.top });
-    console.log(result);
+    // 9. AI scoring or heuristic output
+    if (opts.aiScore) {
+      process.stderr.write("Running AI scoring via Claude Code CLI...\n");
+      const aiScored = await aiScoreClusters(filtered, syntheticMeta, {
+        verbose: opts.verbose,
+      });
+      const format = opts.output as OutputOptions["format"];
+      const result = formatAIScanResult(aiScored, { format, top: opts.top });
+      console.log(result);
+    } else {
+      const format = opts.output as OutputOptions["format"];
+      const result = formatScanResult(filtered, { format, top: opts.top });
+      console.log(result);
+    }
   } catch (error: unknown) {
     if (error instanceof RateLimitError) {
       console.error(

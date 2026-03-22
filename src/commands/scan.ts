@@ -157,6 +157,7 @@ export interface TopicScanOptions {
   noCache: boolean;
   top: number;
   minReactions: number;
+  aiScore?: boolean;
 }
 
 /**
@@ -264,10 +265,20 @@ export async function runTopicScan(opts: TopicScanOptions): Promise<void> {
       (c) => c.totalReactions >= opts.minReactions,
     );
 
-    // 7. Format and output
-    const format = opts.output as OutputOptions["format"];
-    const result = formatScanResult(filtered, { format, top: opts.top });
-    console.log(result);
+    // 7. AI scoring or heuristic output
+    if (opts.aiScore) {
+      verbose("Running AI scoring via Claude Code CLI...", opts.verbose);
+      const aiScored = await aiScoreClusters(filtered, bestRepoMeta, {
+        verbose: opts.verbose,
+      });
+      const format = opts.output as OutputOptions["format"];
+      const result = formatAIScanResult(aiScored, { format, top: opts.top });
+      console.log(result);
+    } else {
+      const format = opts.output as OutputOptions["format"];
+      const result = formatScanResult(filtered, { format, top: opts.top });
+      console.log(result);
+    }
   } catch (error: unknown) {
     if (error instanceof RateLimitError) {
       console.error(
