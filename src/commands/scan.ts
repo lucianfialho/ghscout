@@ -94,11 +94,12 @@ export async function runScan(repo: string, opts: ScanOptions): Promise<void> {
     // 15. AI scoring (optional)
     if (opts.aiScore) {
       verbose("Running AI scoring via Claude Code CLI...", opts.verbose);
-      const aiScored = await aiScoreClusters(filtered, repoMeta, {
+      const toScore = opts.top > 0 ? filtered.slice(0, opts.top) : filtered;
+      const aiScored = await aiScoreClusters(toScore, repoMeta, {
         verbose: opts.verbose,
       });
       const format = opts.output as OutputOptions["format"];
-      const result = formatAIScanResult(aiScored, { format, top: opts.top });
+      const result = formatAIScanResult(aiScored, { format });
       console.log(result);
     } else {
       // 16. Format output (heuristic)
@@ -268,11 +269,12 @@ export async function runTopicScan(opts: TopicScanOptions): Promise<void> {
     // 7. AI scoring or heuristic output
     if (opts.aiScore) {
       verbose("Running AI scoring via Claude Code CLI...", opts.verbose);
-      const aiScored = await aiScoreClusters(filtered, bestRepoMeta, {
+      const toScore = opts.top > 0 ? filtered.slice(0, opts.top) : filtered;
+      const aiScored = await aiScoreClusters(toScore, bestRepoMeta, {
         verbose: opts.verbose,
       });
       const format = opts.output as OutputOptions["format"];
-      const result = formatAIScanResult(aiScored, { format, top: opts.top });
+      const result = formatAIScanResult(aiScored, { format });
       console.log(result);
     } else {
       const format = opts.output as OutputOptions["format"];

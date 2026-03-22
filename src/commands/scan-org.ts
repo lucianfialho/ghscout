@@ -105,11 +105,12 @@ export async function runOrgScan(
     // 9. AI scoring or heuristic output
     if (opts.aiScore) {
       process.stderr.write("Running AI scoring via Claude Code CLI...\n");
-      const aiScored = await aiScoreClusters(filtered, syntheticMeta, {
+      const toScore = opts.top > 0 ? filtered.slice(0, opts.top) : filtered;
+      const aiScored = await aiScoreClusters(toScore, syntheticMeta, {
         verbose: opts.verbose,
       });
       const format = opts.output as OutputOptions["format"];
-      const result = formatAIScanResult(aiScored, { format, top: opts.top });
+      const result = formatAIScanResult(aiScored, { format });
       console.log(result);
     } else {
       const format = opts.output as OutputOptions["format"];
