@@ -116,6 +116,17 @@ function scoreMarketSize(repoMeta: RepoMeta): number {
   return (repoMeta.stars / 50000) * 100;
 }
 
+/** Repo activity penalty (0-1 multiplier). Inactive repos get penalized. */
+function repoActivityMultiplier(repoMeta: RepoMeta): number {
+  if (!repoMeta.pushedAt) return 0.5;
+  const daysSincePush = (Date.now() - new Date(repoMeta.pushedAt).getTime()) / (1000 * 60 * 60 * 24);
+  if (daysSincePush < 30) return 1.0;     // active: no penalty
+  if (daysSincePush < 90) return 0.9;     // slightly stale
+  if (daysSincePush < 180) return 0.7;    // going cold
+  if (daysSincePush < 365) return 0.5;    // likely abandoned
+  return 0.3;                              // dead project
+}
+
 /**
  * Score a single cluster. Used only when scoring one cluster in isolation.
  * For proper relative scoring, use scoreClusters().
@@ -130,13 +141,14 @@ export function scoreCluster(
   const frustration = Math.min(100, (rawFrustration(cluster) / 50) * 100);
   const marketSize = scoreMarketSize(repoMeta);
   const gap = scoreGap(cluster);
+  const activity = repoActivityMultiplier(repoMeta);
 
   let score = Math.round(
-    demand * 0.3 +
+    (demand * 0.3 +
       frequency * 0.25 +
       frustration * 0.15 +
       marketSize * 0.15 +
-      gap * 0.15,
+      gap * 0.15) * activity,
   );
 
   if (cluster.name === "other") {
@@ -210,6 +222,7 @@ export function scoreClusters(
   const frustMax = Math.max(...frustValues);
 
   const marketSize = scoreMarketSize(repoMeta);
+  const activity = repoActivityMultiplier(repoMeta);
 
   // Step 3: Score each cluster with relative normalization
   const scored: ScoredCluster[] = raws.map((r) => {
@@ -219,11 +232,11 @@ export function scoreClusters(
     const gap = r.gap;
 
     const score = Math.round(
-      demand * w.demand +
+      (demand * w.demand +
         frequency * w.frequency +
         frustration * w.frustration +
         marketSize * w.marketSize +
-        gap * w.gap,
+        gap * w.gap) * activity,
     );
 
     return {

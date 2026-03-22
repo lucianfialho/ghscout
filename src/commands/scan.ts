@@ -56,6 +56,13 @@ export async function runScan(repo: string, opts: ScanOptions): Promise<void> {
     verbose("Fetching repo metadata...", opts.verbose);
     const repoMeta = await fetchRepoMeta(client, repo);
 
+    // Show repo activity status
+    if (repoMeta.pushedAt) {
+      const daysSincePush = Math.floor((Date.now() - new Date(repoMeta.pushedAt).getTime()) / (1000 * 60 * 60 * 24));
+      const status = daysSincePush < 30 ? "active" : daysSincePush < 180 ? "stale" : "inactive";
+      process.stderr.write(`→ ${repoMeta.fullName} (${repoMeta.stars.toLocaleString()} stars, last push: ${daysSincePush}d ago — ${status})\n`);
+    }
+
     // 6-7. Fetch issues
     const periodInfo = opts.period ? `, period: ${opts.period}` : ", all open";
     verbose(`Fetching issues (limit: ${opts.limit}${periodInfo})...`, opts.verbose);
