@@ -1,0 +1,462 @@
+{
+  "name": "ghscout",
+  "vision": "CLI evidence engine for product discovery from GitHub issues. Scans repos for recurring pain patterns, clusters them, scores opportunities, and outputs structured evidence packages.",
+  "features": [
+    {
+      "name": "Project Scaffold",
+      "tasks": [
+        {
+          "id": "1",
+          "title": "Initialize project structure with TypeScript + Commander",
+          "description": "Create package.json (name: ghscout, bin: ghscout/dist/index.js), tsconfig.json (ES2022, NodeNext), vitest.config.ts. Install deps: commander, yaml. Dev deps: typescript, vitest, tsx, @types/node. Create src/index.ts with Commander root program (name, version, description). Create .gitignore (node_modules, dist, .env, .DS_Store). Verify `npx tsx src/index.ts --help` prints help.",
+          "priority": 1,
+          "passes": false,
+          "tests": {
+            "command": "npx tsx src/index.ts --help"
+          },
+          "acceptance": [
+            "package.json has name ghscout and bin field",
+            "tsconfig.json compiles to dist/",
+            "npx tsx src/index.ts --help prints help text with ghscout name",
+            "npm run build succeeds",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["package.json", "tsconfig.json", "src/index.ts"],
+            "hints": ["Reuse patterns from spec2cli project structure", "ESM with type: module"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GitHub API Client",
+      "tasks": [
+        {
+          "id": "2",
+          "title": "Create GitHub auth resolver",
+          "description": "Create src/github/auth.ts. Resolve auth token with priority: 1) GITHUB_TOKEN env var, 2) run `gh auth token` subprocess (catch if gh not installed), 3) null (unauthenticated). Export resolveToken(): Promise<string | null>. Export buildHeaders(token): Record<string, string> that adds Authorization header if token exists and always adds Accept: application/vnd.github.v3+json. Write tests in src/github/auth.test.ts mocking env vars and subprocess.",
+          "priority": 1,
+          "passes": false,
+          "tests": {
+            "command": "npx vitest run src/github/auth.test.ts"
+          },
+          "acceptance": [
+            "resolveToken returns GITHUB_TOKEN from env when set",
+            "resolveToken falls back to gh auth token subprocess",
+            "resolveToken returns null when neither available",
+            "buildHeaders includes Authorization Bearer when token exists",
+            "buildHeaders works without token (unauthenticated)",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["src/github/auth.ts", "src/github/auth.test.ts"],
+            "hints": ["Use execSync for gh auth token, wrap in try/catch", "Do not fail if gh CLI is not installed"]
+          }
+        },
+        {
+          "id": "3",
+          "title": "Create rate-limited HTTP client for GitHub API",
+          "description": "Create src/github/client.ts. Export class GitHubClient with constructor(token: string | null). Methods: get<T>(url, params?): Promise<T>, getPaginated<T>(url, params?, maxPages?): Promise<T[]>. Track rate limits from X-RateLimit-Remaining header. Warn to stderr at 20% remaining. Throw RateLimitError when exhausted. Support pagination via Link header parsing. Write tests in src/github/client.test.ts with mocked fetch.",
+          "priority": 1,
+          "passes": false,
+          "tests": {
+            "command": "npx vitest run src/github/client.test.ts"
+          },
+          "acceptance": [
+            "get() makes authenticated request when token provided",
+            "get() works unauthenticated",
+            "Tracks rate limit from response headers",
+            "Warns to stderr when rate limit below 20%",
+            "Throws RateLimitError when limit exhausted",
+            "getPaginated follows Link header for next pages",
+            "getPaginated respects maxPages limit",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["src/github/client.ts", "src/github/client.test.ts"],
+            "hints": ["Parse Link header with regex for rel=next", "Use native fetch", "Create src/github/types.ts for shared types"]
+          }
+        },
+        {
+          "id": "4",
+          "title": "Create file-based cache layer",
+          "description": "Create src/github/cache.ts. Cache dir: ~/.cache/ghscout/. Cache key: sha256 of URL + params. Store JSON with { data, timestamp } wrapper. Export getCached<T>(key, ttlMs): T | null and setCache(key, data): void. Repo metadata TTL: 24h. Issue data TTL: 1h. Support --no-cache flag (bypass reads). Write tests in src/github/cache.test.ts using temp directory.",
+          "priority": 1,
+          "passes": false,
+          "tests": {
+            "command": "npx vitest run src/github/cache.test.ts"
+          },
+          "acceptance": [
+            "Caches data to ~/.cache/ghscout/ (or XDG_CACHE_HOME)",
+            "Returns null for uncached keys",
+            "Returns null for expired cache entries",
+            "Returns data for valid cache entries",
+            "Different URLs get different cache keys",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["src/github/cache.ts", "src/github/cache.test.ts"],
+            "hints": ["Reuse cache pattern from spec2cli src/parser/cache.ts", "Use createHash from node:crypto"]
+          }
+        },
+        {
+          "id": "5",
+          "title": "Create GitHub data fetchers (issues, PRs, repos)",
+          "description": "Create src/github/fetchers.ts. Export functions: fetchRepoMeta(client, owner/repo): RepoMeta (stars, pushed_at, topics, language), fetchIssues(client, owner/repo, opts: {limit, period, state}): Issue[] (title, body, labels, reactions, comments_count, created_at, html_url, user), fetchPulls(client, owner/repo, opts: {state: closed, limit}): Pull[] (title, merged, reactions, html_url, user), fetchOrgRepos(client, org, minStars): RepoMeta[], searchReposByTopic(client, topic, lang, minStars): RepoMeta[]. Define all types in src/github/types.ts. Write tests with fixture data in test/fixtures/.",
+          "priority": 1,
+          "passes": false,
+          "tests": {
+            "command": "npx vitest run src/github/fetchers.test.ts"
+          },
+          "acceptance": [
+            "fetchRepoMeta returns structured repo data",
+            "fetchIssues respects limit and period filter",
+            "fetchIssues includes reactions data",
+            "fetchPulls distinguishes merged vs rejected (closed not merged)",
+            "fetchOrgRepos filters by min-stars",
+            "searchReposByTopic uses GitHub search API",
+            "All types defined in types.ts",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["src/github/fetchers.ts", "src/github/types.ts", "src/github/fetchers.test.ts"],
+            "hints": ["GitHub issues API: reactions come via Accept: application/vnd.github.squirrel-girl-preview+json or reactions+json", "Period filter: use since param (ISO 8601)", "Closed PRs: merged_at === null means rejected"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clustering Engine",
+      "tasks": [
+        {
+          "id": "6",
+          "title": "Create text tokenizer with stopword removal and bigram extraction",
+          "description": "Create src/analysis/tokenizer.ts. Export tokenize(text): string[] — lowercase, remove punctuation, remove stopwords (built-in list of ~150 English stopwords + GitHub-specific: 'issue', 'bug', 'fix', 'error', 'please', 'using', 'version'). Export extractBigrams(tokens): string[] — consecutive token pairs. Export tokenizeTitle(title): string[] — optimized for issue titles (shorter text). Write tests in src/analysis/tokenizer.test.ts with real issue title examples.",
+          "priority": 2,
+          "passes": false,
+          "tests": {
+            "command": "npx vitest run src/analysis/tokenizer.test.ts"
+          },
+          "acceptance": [
+            "Removes stopwords correctly",
+            "Lowercases all tokens",
+            "Extracts bigrams from token arrays",
+            "Handles edge cases: empty strings, single words, special chars",
+            "GitHub-specific stopwords removed",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["src/analysis/tokenizer.ts", "src/analysis/tokenizer.test.ts"],
+            "hints": ["Keep stopword list inline, no external dep", "Bigrams: ['auth', 'middleware'] → 'auth middleware'"]
+          }
+        },
+        {
+          "id": "7",
+          "title": "Create issue clustering algorithm",
+          "description": "Create src/analysis/cluster.ts. Export clusterIssues(issues: Issue[]): Cluster[]. Clustering strategy: 1) Tokenize each issue title into bigrams+unigrams, 2) Count token frequency across all issues, 3) Group issues that share top tokens (threshold: 2+ shared significant tokens), 4) Merge small clusters (<2 issues) into 'other', 5) Also group by shared labels as secondary signal. A Cluster has: name (top keyword/bigram), issues (list), issueCount, totalReactions, labels (common labels). Write tests with realistic fixture data (create test/fixtures/sample-issues.json with 20+ real-looking issues).",
+          "priority": 2,
+          "passes": false,
+          "tests": {
+            "command": "npx vitest run src/analysis/cluster.test.ts"
+          },
+          "acceptance": [
+            "Groups issues with similar titles into clusters",
+            "Cluster name is the most representative keyword/bigram",
+            "Small clusters (<2 issues) merge into 'other'",
+            "Each cluster tracks issue count and total reactions",
+            "Label overlap used as secondary grouping signal",
+            "Returns clusters sorted by issue count descending",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["src/analysis/cluster.ts", "src/analysis/cluster.test.ts", "test/fixtures/sample-issues.json"],
+            "hints": ["Start simple: frequency-based grouping. Don't over-engineer.", "Cluster name = most frequent bigram in the group"]
+          }
+        },
+        {
+          "id": "8",
+          "title": "Create opportunity scoring engine",
+          "description": "Create src/analysis/scorer.ts. Export scoreCluster(cluster: Cluster, repoMeta: RepoMeta): ScoredCluster. Score 0-100 with weighted components: demand (30%): total 👍 reactions normalized, frequency (25%): issue count normalized, frustration (15%): 👎 reactions + frustration keyword count + avg issue age, marketSize (15%): repo stars, gap (15%): ratio of issues without linked merged PRs. Export type ScoredCluster extends Cluster with { score, breakdown: { demand, frequency, frustration, marketSize, gap } }. Write tests.",
+          "priority": 2,
+          "passes": false,
+          "tests": {
+            "command": "npx vitest run src/analysis/scorer.test.ts"
+          },
+          "acceptance": [
+            "Score is 0-100 integer",
+            "Breakdown shows individual component scores",
+            "High reaction clusters score higher on demand",
+            "Many-issue clusters score higher on frequency",
+            "Old unresolved issues score higher on frustration",
+            "High-star repos score higher on market size",
+            "Clusters with no merged PR solutions score higher on gap",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["src/analysis/scorer.ts", "src/analysis/scorer.test.ts"],
+            "hints": ["Normalize each signal to 0-100 before weighting", "Use min-max normalization within the result set"]
+          }
+        },
+        {
+          "id": "9",
+          "title": "Create rejected PR and workaround detectors",
+          "description": "Create src/analysis/signals.ts. Export detectRejectedDemand(pulls: Pull[]): RejectedPR[] — closed PRs where merged_at is null AND total_reactions >= 3. Export detectWorkarounds(issues: Issue[]): WorkaroundIssue[] — issues where body or comments contain code blocks (``` markers) or npm package references (pattern: `npm install X` or package name mentions). These are extra signals fed into clustering. Write tests.",
+          "priority": 2,
+          "passes": false,
+          "tests": {
+            "command": "npx vitest run src/analysis/signals.test.ts"
+          },
+          "acceptance": [
+            "Identifies closed-not-merged PRs with 3+ reactions as rejected demand",
+            "Identifies issues with code blocks as workaround signals",
+            "Detects npm package references in issue bodies",
+            "Returns empty arrays when no signals found",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["src/analysis/signals.ts", "src/analysis/signals.test.ts"],
+            "hints": ["Simple regex for code blocks: /```[\\s\\S]*?```/", "npm pattern: /npm i(?:nstall)?\\s+([\\w@/-]+)/"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Output Formatters",
+      "tasks": [
+        {
+          "id": "10",
+          "title": "Create output formatters for scan results",
+          "description": "Create src/output/formatters.ts. Export formatScanResult(clusters: ScoredCluster[], opts: {format, top}): string. Formats: 'json' (compact JSON), 'table' (aligned columns: rank, score, name, issues, reactions, top issue URL), 'pretty' (colorized with score breakdown, emoji indicators for frustration/demand, example issue titles+URLs). Default: pretty in TTY, json in pipe. Respect NO_COLOR env. Write tests.",
+          "priority": 3,
+          "passes": false,
+          "tests": {
+            "command": "npx vitest run src/output/formatters.test.ts"
+          },
+          "acceptance": [
+            "json format outputs valid compact JSON",
+            "table format shows aligned columns with rank/score/name/issues/reactions",
+            "pretty format includes colorized score and breakdown",
+            "Respects NO_COLOR env var",
+            "top flag limits number of clusters shown",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["src/output/formatters.ts", "src/output/formatters.test.ts"],
+            "hints": ["Reuse formatter patterns from spec2cli src/output/formatters.ts", "Use ANSI codes directly, no chalk dep"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scan Command (MVP)",
+      "tasks": [
+        {
+          "id": "11",
+          "title": "Wire up the scan command for single repo",
+          "description": "In src/index.ts, register the 'scan' command. Accept positional arg <repo> (owner/repo format). Wire global options: --output, --limit, --period, --min-stars, --verbose, --no-cache, --top, --min-reactions. Flow: 1) resolve auth token, 2) create GitHubClient, 3) fetchRepoMeta, 4) fetchIssues with limit+period, 5) fetchPulls (closed), 6) detect signals (rejected PRs, workarounds), 7) cluster issues, 8) score clusters, 9) format output. Handle errors: invalid repo format, repo not found, rate limit. Write integration test with mocked fetch that tests the full flow.",
+          "priority": 3,
+          "passes": false,
+          "tests": {
+            "command": "npx vitest run src/commands/scan.test.ts"
+          },
+          "acceptance": [
+            "ghscout scan owner/repo fetches issues and outputs scored clusters",
+            "Validates repo format (must contain /)",
+            "Respects --limit and --period flags",
+            "Respects --output flag (json, table, pretty)",
+            "Respects --top and --min-reactions flags",
+            "--verbose shows API calls to stderr",
+            "Handles repo not found gracefully",
+            "Handles rate limit exhaustion gracefully",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["src/index.ts", "src/commands/scan.ts", "src/commands/scan.test.ts"],
+            "hints": ["Extract scan logic into src/commands/scan.ts, register in index.ts", "Use process.stderr for verbose/warnings, process.stdout for output only"]
+          }
+        },
+        {
+          "id": "12",
+          "title": "Add --org flag to scan command",
+          "description": "Extend scan command: when --org <org> is passed (no positional repo), 1) fetchOrgRepos filtered by --min-stars, 2) take top 10 repos by stars, 3) run the scan pipeline on each, 4) merge clusters across repos (cross-repo dedup by cluster name similarity), 5) output aggregated results with repo source attribution. Show progress to stderr (Scanning repo 1/10...). Write test.",
+          "priority": 4,
+          "passes": false,
+          "tests": {
+            "command": "npx vitest run src/commands/scan-org.test.ts"
+          },
+          "acceptance": [
+            "ghscout scan --org vercel scans top repos of org",
+            "Filters repos by --min-stars",
+            "Caps at 10 repos per org",
+            "Merges clusters across repos",
+            "Shows which repos contributed to each cluster",
+            "Shows progress to stderr",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["src/commands/scan.ts", "src/commands/scan-org.test.ts"],
+            "hints": ["Reuse single-repo scan pipeline", "Cross-repo merge: clusters with same top bigram merge"]
+          }
+        },
+        {
+          "id": "13",
+          "title": "Add --topic flag to scan command",
+          "description": "Extend scan command: when --topic <topic> is passed (no positional repo, no --org), 1) searchReposByTopic filtered by --lang and --min-stars, 2) take top 10 results, 3) run scan pipeline on each, 4) merge clusters across repos. Write test.",
+          "priority": 4,
+          "passes": false,
+          "tests": {
+            "command": "npx vitest run src/commands/scan-topic.test.ts"
+          },
+          "acceptance": [
+            "ghscout scan --topic devtools scans trending repos in topic",
+            "Respects --lang filter",
+            "Respects --min-stars filter",
+            "Caps at 10 repos",
+            "Merges clusters cross-repo",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["src/commands/scan.ts", "src/commands/scan-topic.test.ts"],
+            "hints": ["Uses searchReposByTopic from fetchers", "Same merge logic as --org"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Evidence Command",
+      "tasks": [
+        {
+          "id": "14",
+          "title": "Create evidence command for deep-dive",
+          "description": "Create src/commands/evidence.ts. Register 'evidence <repo> <query>' command. Flow: 1) search issues in repo matching query (GitHub search API: repo:owner/repo query in:title,body), 2) for each issue, fetch reactions and comment count, 3) detect workaround signals, 4) find linked PRs (search PRs mentioning issue numbers), 5) output structured evidence: total issues, total unique commenters, total reactions, sorted issue list with URLs. Support --sort (reactions|recent|comments) and --output. Write test.",
+          "priority": 5,
+          "passes": false,
+          "tests": {
+            "command": "npx vitest run src/commands/evidence.test.ts"
+          },
+          "acceptance": [
+            "ghscout evidence owner/repo 'query' returns matching issues",
+            "Shows total issues, reactions, unique commenters",
+            "Lists individual issues with title, URL, reactions, age",
+            "Detects linked PRs for the topic",
+            "Supports --sort flag",
+            "Output is structured (pasteable into docs/pitch)",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["src/commands/evidence.ts", "src/commands/evidence.test.ts"],
+            "hints": ["GitHub search issues API: GET /search/issues?q=repo:owner/repo+query", "Unique commenters: count distinct user.login across issues"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trending Command",
+      "tasks": [
+        {
+          "id": "15",
+          "title": "Create trending command",
+          "description": "Create src/commands/trending.ts. Register 'trending' command. Flow: 1) search GitHub for issues with most reactions, created in last 30 days, in repos with 500+ stars, 2) filter by --topic and --lang if provided, 3) cluster the results, 4) score and output. Uses GET /search/issues?q=reactions:>10+created:>DATE&sort=reactions. Support --output, --top. Write test.",
+          "priority": 5,
+          "passes": false,
+          "tests": {
+            "command": "npx vitest run src/commands/trending.test.ts"
+          },
+          "acceptance": [
+            "ghscout trending shows top pain clusters across GitHub",
+            "Filters by --topic and --lang",
+            "Only includes issues with significant reactions",
+            "Clusters and scores results",
+            "Typecheck passes"
+          ],
+          "context": {
+            "files": ["src/commands/trending.ts", "src/commands/trending.test.ts"],
+            "hints": ["GitHub search: q=reactions:>10+created:>2026-02-21", "Date calc: 30 days ago in ISO 8601"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Polish & Ship",
+      "tasks": [
+        {
+          "id": "16",
+          "title": "Add README with real output examples",
+          "description": "Create README.md. Include: one-line description, install (npx ghscout), usage examples for all 3 commands with REAL output (run ghscout against a real repo and paste the output), how scoring works, how clustering works, comparison table vs Reddit tools (SaasFinder etc.), link to spec. Keep it under 150 lines. Add demo GIF placeholder.",
+          "priority": 6,
+          "passes": false,
+          "tests": {
+            "command": "test -f README.md && head -1 README.md | grep -q 'ghscout'"
+          },
+          "acceptance": [
+            "README exists with install instructions",
+            "Shows real output examples from at least 1 repo",
+            "Explains scoring model briefly",
+            "Under 150 lines",
+            "Typecheck passes (npm run build)"
+          ],
+          "context": {
+            "files": ["README.md"],
+            "hints": ["Run ghscout scan vercel/next.js for real examples", "Keep it concise like spec2cli README"]
+          }
+        },
+        {
+          "id": "17",
+          "title": "Prepare npm publish and GitHub repo",
+          "description": "Verify package.json: name ghscout, version 0.1.0, bin field, files field (dist only), engines node>=18, keywords, repository, license MIT. Add prepublishOnly script: npm run build && npm test. Add .npmignore (src, test, .github, tasks). Verify npm run build && npm test passes. Verify npx . scan --help works from project root.",
+          "priority": 6,
+          "passes": false,
+          "tests": {
+            "command": "npm run build && npm test"
+          },
+          "acceptance": [
+            "npm run build produces dist/",
+            "npm test passes all tests",
+            "npx . scan --help shows scan command help",
+            "package.json has correct metadata",
+            ".npmignore excludes non-dist files"
+          ],
+          "context": {
+            "files": ["package.json", ".npmignore"],
+            "hints": ["Test with npm pack to verify published contents"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Autoresearch Loop",
+      "tasks": [
+        {
+          "id": "18",
+          "title": "Create program.md for autonomous product discovery loop",
+          "description": "Create program.md at project root. This is a structured instruction file (like karpathy/autoresearch) that teaches an AI coding agent to use ghscout in an autonomous research loop. The program should: 1) Define a research session with configurable topic areas (devtools, ai, infra, frontend, backend), 2) For each topic: run ghscout scan --topic <topic> --output json, parse results, evaluate each cluster (is it a real product opportunity? does a solution exist?), 3) For promising clusters (score >70): run ghscout evidence to get hard numbers, 4) Write findings to discoveries/YYYY-MM-DD.md as structured markdown (opportunity name, evidence summary, issue count, repos affected, existing solutions, verdict: build/skip/watch), 5) Track a simple metric: number of 'build' verdicts per session, 6) Include a 'refinement' step: after each full pass, adjust search parameters (try different topics, broader/narrower min-stars, different periods) based on what produced the most actionable results. Also create discoveries/.gitkeep to track the output directory.",
+          "priority": 7,
+          "passes": false,
+          "tests": {
+            "command": "test -f program.md && grep -q 'ghscout' program.md"
+          },
+          "acceptance": [
+            "program.md exists at project root",
+            "Contains step-by-step instructions an AI agent can follow autonomously",
+            "Defines clear metric: build verdicts per session",
+            "Includes refinement/iteration step",
+            "Output goes to discoveries/ directory as dated markdown",
+            "Each discovery has: name, evidence, issue count, repos, existing solutions, verdict",
+            "Works with Claude Code: user can say 'read program.md and run a research session'",
+            "discoveries/ directory exists"
+          ],
+          "context": {
+            "files": ["program.md", "discoveries/.gitkeep"],
+            "hints": [
+              "Reference karpathy/autoresearch for tone and structure",
+              "The agent should be able to run this fully autonomously",
+              "Keep it under 100 lines — concise like autoresearch's program.md",
+              "The metric (build verdicts) gives the loop a convergence signal",
+              "Include example first run so agent knows expected format"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

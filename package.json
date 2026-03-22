@@ -1,0 +1,50 @@
+{
+  "name": "ghscout",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Evidence engine for product discovery from GitHub issues",
+  "bin": {
+    "ghscout": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "cli",
+    "github",
+    "issues",
+    "product-discovery",
+    "open-source",
+    "indie-hacker",
+    "devtools"
+  ],
+  "author": "Lucian Fialho",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucianfialho/ghscout.git"
+  },
+  "homepage": "https://github.com/lucianfialho/ghscout",
+  "bugs": {
+    "url": "https://github.com/lucianfialho/ghscout/issues"
+  },
+  "dependencies": {
+    "commander": "^13.0.0",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "tsx": "^4.19.0",
+    "@types/node": "^22.0.0"
+  }
+}
