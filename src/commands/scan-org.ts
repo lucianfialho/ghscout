@@ -94,7 +94,7 @@ export async function runOrgScan(
       description: `Aggregated scan for org ${org}`,
     };
 
-    const scored = scoreClusters(mergedClusters, syntheticMeta);
+    const scored = scoreClusters(mergedClusters, syntheticMeta, "cross");
 
     // 8. Filter by minReactions
     const filtered = scored.filter(

@@ -208,13 +208,16 @@ describe("runScan", () => {
     // First console.log call should be the JSON output
     const firstCall = consoleSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(firstCall);
-    expect(Array.isArray(parsed)).toBe(true);
+    expect(parsed).toHaveProperty("meta");
+    expect(parsed.meta).toHaveProperty("scannedAt");
+    expect(parsed.meta).toHaveProperty("clusterCount");
+    expect(Array.isArray(parsed.clusters)).toBe(true);
     // Each item should have score and breakdown
-    if (parsed.length > 0) {
-      expect(parsed[0]).toHaveProperty("score");
-      expect(parsed[0]).toHaveProperty("breakdown");
-      expect(parsed[0]).toHaveProperty("name");
-      expect(parsed[0]).toHaveProperty("issueCount");
+    if (parsed.clusters.length > 0) {
+      expect(parsed.clusters[0]).toHaveProperty("score");
+      expect(parsed.clusters[0]).toHaveProperty("breakdown");
+      expect(parsed.clusters[0]).toHaveProperty("name");
+      expect(parsed.clusters[0]).toHaveProperty("issueCount");
     }
   });
 
@@ -257,7 +260,7 @@ describe("runScan", () => {
 
     const firstCall = consoleSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(firstCall);
-    expect(parsed.length).toBeLessThanOrEqual(1);
+    expect(parsed.clusters.length).toBeLessThanOrEqual(1);
   });
 
   it("respects --min-reactions filter", async () => {
@@ -270,7 +273,7 @@ describe("runScan", () => {
     const firstCall = consoleSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(firstCall);
     // With minReactions=9999, no clusters should pass
-    expect(parsed.length).toBe(0);
+    expect(parsed.clusters.length).toBe(0);
   });
 
   it("handles repo not found (404) gracefully", async () => {

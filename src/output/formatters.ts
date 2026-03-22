@@ -64,7 +64,14 @@ function sliceClusters(
 }
 
 function formatJson(clusters: ScoredCluster[], top?: number): string {
-  return JSON.stringify(sliceClusters(clusters, top));
+  const sliced = sliceClusters(clusters, top);
+  return JSON.stringify({
+    meta: {
+      scannedAt: new Date().toISOString(),
+      clusterCount: sliced.length,
+    },
+    clusters: sliced,
+  });
 }
 
 function formatTable(clusters: ScoredCluster[], top?: number): string {

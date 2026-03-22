@@ -171,7 +171,8 @@ describe("runTopicScan", () => {
     expect(consoleSpy).toHaveBeenCalled();
     const output = consoleSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(Array.isArray(parsed)).toBe(true);
+    expect(parsed).toHaveProperty("meta");
+    expect(Array.isArray(parsed.clusters)).toBe(true);
 
     // Should have called search API
     const searchCall = mockFetch.mock.calls.find((c) =>

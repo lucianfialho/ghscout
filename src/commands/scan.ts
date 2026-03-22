@@ -75,7 +75,7 @@ export async function runScan(repo: string, opts: ScanOptions): Promise<void> {
     const clusters = clusterIssues(issues);
 
     // 13. Score clusters
-    const scored = scoreClusters(clusters, repoMeta);
+    const scored = scoreClusters(clusters, repoMeta, "single");
 
     // 14. Filter by minReactions
     const filtered = scored.filter(
@@ -239,7 +239,7 @@ export async function runTopicScan(opts: TopicScanOptions): Promise<void> {
     const merged = mergeClustersAcrossRepos(allClusters);
 
     // 5. Score merged clusters
-    const scored = scoreClusters(merged, bestRepoMeta);
+    const scored = scoreClusters(merged, bestRepoMeta, "cross");
 
     // 6. Filter by minReactions
     const filtered = scored.filter(

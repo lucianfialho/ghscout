@@ -288,17 +288,50 @@ describe("runEvidence", () => {
     expect(allOutput).toContain("URL");
   });
 
-  it("outputs pretty format with summary and PR section", async () => {
+  it("outputs pretty format with ## Summary and ## Top Issues sections", async () => {
     await runEvidence("test/repo", "auth middleware", defaultOpts);
 
     const allOutput = consoleSpy.mock.calls
       .map((c) => String(c[0]))
       .join("\n");
-    expect(allOutput).toContain('Evidence: "auth middleware" in test/repo');
-    expect(allOutput).toContain("Summary:");
-    expect(allOutput).toContain("Issues found:");
-    expect(allOutput).toContain("Unique authors:");
-    expect(allOutput).toContain("Related PRs:");
+    expect(allOutput).toContain('# Evidence: "auth middleware" in test/repo');
+    expect(allOutput).toContain("## Summary");
+    expect(allOutput).toContain("## Top Issues by Demand");
+    expect(allOutput).toContain("open issues");
+    expect(allOutput).toContain("unique authors");
+    expect(allOutput).toContain("demand signal");
+    expect(allOutput).toContain("related PRs");
+    expect(allOutput).toContain("Oldest unresolved:");
+  });
+
+  it("pretty output contains no ANSI escape codes", async () => {
+    await runEvidence("test/repo", "auth middleware", defaultOpts);
+
+    const allOutput = consoleSpy.mock.calls
+      .map((c) => String(c[0]))
+      .join("\n");
+    // eslint-disable-next-line no-control-regex
+    expect(allOutput).not.toMatch(/\x1b\[/);
+  });
+
+  it("pretty output shows demand strength based on total reactions", async () => {
+    await runEvidence("test/repo", "auth middleware", defaultOpts);
+
+    const allOutput = consoleSpy.mock.calls
+      .map((c) => String(c[0]))
+      .join("\n");
+    // Total reactions = 137, which is > 100 = "strong"
+    expect(allOutput).toContain("strong demand signal");
+  });
+
+  it("pretty output shows rejected PRs with demand section", async () => {
+    await runEvidence("test/repo", "auth middleware", defaultOpts);
+
+    const allOutput = consoleSpy.mock.calls
+      .map((c) => String(c[0]))
+      .join("\n");
+    expect(allOutput).toContain("## Rejected PRs (unmet demand)");
+    expect(allOutput).toContain("closed without merge");
   });
 
   it("errors on invalid repo format", async () => {

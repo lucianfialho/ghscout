@@ -133,6 +133,27 @@ describe("scoreCluster", () => {
     );
   });
 
+  it("frustration keywords in issue body increase frustration score", () => {
+    const calmCluster = makeCluster({
+      issues: [makeIssue({ title: "Feature request", body: "Would be nice to have this." })],
+    });
+    const bodyFrustrationCluster = makeCluster({
+      issues: [
+        makeIssue({
+          title: "Feature request",
+          body: "Please fix this, been waiting for months ago. Any update? I have a hacky workaround but it is an ugly hack. Still broken, this is a regression.",
+        }),
+      ],
+    });
+
+    const calmResult = scoreCluster(calmCluster, makeRepoMeta());
+    const bodyResult = scoreCluster(bodyFrustrationCluster, makeRepoMeta());
+
+    expect(bodyResult.breakdown.frustration).toBeGreaterThan(
+      calmResult.breakdown.frustration,
+    );
+  });
+
   it("high-star repo scores higher on market size", () => {
     const cluster = makeCluster();
     const lowStars = makeRepoMeta({ stars: 100 });
@@ -200,5 +221,64 @@ describe("scoreClusters", () => {
     expect(results[0].name).toBe("high");
     expect(results[1].name).toBe("low");
     expect(results[0].score).toBeGreaterThanOrEqual(results[1].score);
+  });
+
+  it("single mode ignores marketSize weight but still includes it in breakdown", () => {
+    const cluster = makeCluster({
+      name: "a",
+      issues: [makeIssue({ state: "open", reactions: { thumbsUp: 10, thumbsDown: 0, total: 10 } })],
+      issueCount: 1,
+    });
+
+    const lowStarRepo = makeRepoMeta({ stars: 100 });
+    const highStarRepo = makeRepoMeta({ stars: 60000 });
+
+    const lowResults = scoreClusters([cluster], lowStarRepo, "single");
+    const highResults = scoreClusters([cluster], highStarRepo, "single");
+
+    // Scores should be identical because marketSize weight is 0 in single mode
+    expect(lowResults[0].score).toBe(highResults[0].score);
+
+    // But breakdown should still show different marketSize values
+    expect(highResults[0].breakdown.marketSize).toBeGreaterThan(
+      lowResults[0].breakdown.marketSize,
+    );
+  });
+
+  it("cross mode uses marketSize weight so different star counts change the score", () => {
+    const cluster = makeCluster({
+      name: "a",
+      issues: [makeIssue({ state: "open", reactions: { thumbsUp: 10, thumbsDown: 0, total: 10 } })],
+      issueCount: 1,
+    });
+
+    const lowStarRepo = makeRepoMeta({ stars: 100 });
+    const highStarRepo = makeRepoMeta({ stars: 60000 });
+
+    const lowResults = scoreClusters([cluster], lowStarRepo, "cross");
+    const highResults = scoreClusters([cluster], highStarRepo, "cross");
+
+    // Scores should differ because marketSize has weight in cross mode
+    expect(highResults[0].score).toBeGreaterThan(lowResults[0].score);
+  });
+
+  it("defaults to single mode", () => {
+    const cluster = makeCluster({
+      name: "a",
+      issues: [makeIssue({ state: "open", reactions: { thumbsUp: 10, thumbsDown: 0, total: 10 } })],
+      issueCount: 1,
+    });
+
+    const lowStarRepo = makeRepoMeta({ stars: 100 });
+    const highStarRepo = makeRepoMeta({ stars: 60000 });
+
+    // Default (no mode) should behave like "single"
+    const defaultLow = scoreClusters([cluster], lowStarRepo);
+    const defaultHigh = scoreClusters([cluster], highStarRepo);
+    const singleLow = scoreClusters([cluster], lowStarRepo, "single");
+    const singleHigh = scoreClusters([cluster], highStarRepo, "single");
+
+    expect(defaultLow[0].score).toBe(singleLow[0].score);
+    expect(defaultHigh[0].score).toBe(singleHigh[0].score);
   });
 });

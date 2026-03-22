@@ -172,7 +172,7 @@ export async function runTrending(opts: TrendingOptions): Promise<void> {
     };
 
     // 7. Score clusters
-    const scored = scoreClusters(clusters, syntheticMeta);
+    const scored = scoreClusters(clusters, syntheticMeta, "cross");
 
     // 8. Format output
     const format = opts.output as OutputOptions["format"];

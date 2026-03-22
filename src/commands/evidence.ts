@@ -92,11 +92,14 @@ interface EvidenceSummary {
   uniqueUsers: number;
   totalReactions: number;
   relatedPRs: number;
+  mergedPRs: number;
+  rejectedPRsWithDemand: number;
 }
 
 interface EvidenceResult {
   summary: EvidenceSummary;
   issues: Issue[];
+  workarounds: import("../analysis/signals.js").WorkaroundIssue[];
   prs: Array<{
     number: number;
     title: string;
@@ -137,57 +140,94 @@ function formatTable(result: EvidenceResult): string {
   return [headerLine, separator, ...dataLines].join("\n");
 }
 
+function demandStrength(totalReactions: number): string {
+  if (totalReactions > 100) return "strong";
+  if (totalReactions >= 20) return "moderate";
+  return "weak";
+}
+
 function formatPretty(
   result: EvidenceResult,
   repo: string,
   query: string,
-  sortBy: string,
+  _sortBy: string,
 ): string {
   const lines: string[] = [];
 
-  lines.push(c(BOLD, `Evidence: "${query}" in ${repo}`));
-  lines.push("");
-  lines.push("Summary:");
-  lines.push(`  Issues found:    ${result.summary.totalIssues}`);
-  lines.push(`  Unique authors:  ${result.summary.uniqueUsers}`);
-  lines.push(`  Total \u{1F44D}:        ${result.summary.totalReactions}`);
-  lines.push(`  Related PRs:     ${result.summary.relatedPRs}`);
+  // Title
+  lines.push(`# Evidence: "${query}" in ${repo}`);
   lines.push("");
 
-  const sortLabel =
-    sortBy === "reactions"
-      ? "reactions"
-      : sortBy === "comments"
-        ? "comments"
-        : "recent";
-  lines.push(`Issues (sorted by ${sortLabel}):`);
+  // Summary section
+  lines.push("## Summary");
 
-  for (let i = 0; i < result.issues.length; i++) {
-    const issue = result.issues[i];
+  const strength = demandStrength(result.summary.totalReactions);
+  lines.push(
+    `- **${result.summary.totalIssues} open issues** across ${result.summary.uniqueUsers} unique authors`,
+  );
+  lines.push(
+    `- **${result.summary.totalReactions} total \u{1F44D} reactions** \u2014 ${strength} demand signal`,
+  );
+
+  const { mergedPRs, rejectedPRsWithDemand, relatedPRs } = result.summary;
+  lines.push(
+    `- **${relatedPRs} related PRs** (${mergedPRs} merged, ${rejectedPRsWithDemand} rejected with demand)`,
+  );
+
+  // Oldest unresolved issue
+  const openIssues = result.issues.filter((i) => i.state === "open");
+  if (openIssues.length > 0) {
+    let oldest = openIssues[0];
+    let oldestAge = daysAgo(oldest.createdAt);
+    for (const issue of openIssues) {
+      const age = daysAgo(issue.createdAt);
+      if (age > oldestAge) {
+        oldest = issue;
+        oldestAge = age;
+      }
+    }
+    lines.push(`- Oldest unresolved: ${oldestAge}d (issue #${oldest.number})`);
+  }
+
+  lines.push("");
+
+  // Top Issues by Demand
+  lines.push("## Top Issues by Demand");
+
+  const sorted = [...result.issues].sort(
+    (a, b) => b.reactions.thumbsUp - a.reactions.thumbsUp,
+  );
+  for (let i = 0; i < sorted.length; i++) {
+    const issue = sorted[i];
     const age = daysAgo(issue.createdAt);
     const labelsStr =
       issue.labels.length > 0 ? ` | labels: ${issue.labels.join(", ")}` : "";
     lines.push(
-      `  ${i + 1}. [${issue.reactions.thumbsUp} \u{1F44D}] ${issue.title}`,
+      `${i + 1}. [${issue.reactions.thumbsUp} \u{1F44D}] ${issue.title} (#${issue.number})`,
     );
-    lines.push(`     ${issue.htmlUrl}`);
     lines.push(
-      c(
-        DIM,
-        `     opened ${age} days ago | ${issue.commentsCount} comments${labelsStr}`,
-      ),
+      `   Opened ${age} days ago | ${issue.commentsCount} comments${labelsStr}`,
+    );
+    lines.push(`   ${issue.htmlUrl}`);
+  }
+
+  // Workarounds Detected
+  if (result.workarounds.length > 0) {
+    lines.push("");
+    lines.push("## Workarounds Detected");
+    lines.push(
+      `- ${result.workarounds.length} issues contain code block workarounds`,
     );
   }
 
-  if (result.prs.length > 0) {
+  // Rejected PRs (unmet demand)
+  const rejectedPRs = result.prs.filter((pr) => pr.status === "rejected" && pr.reactions > 0);
+  if (rejectedPRs.length > 0) {
     lines.push("");
-    lines.push("Related PRs:");
-    for (const pr of result.prs) {
-      const statusTag = pr.status === "merged" ? "MERGED" : "REJECTED";
-      const reactionsStr =
-        pr.reactions > 0 ? ` (${pr.reactions} \u{1F44D})` : "";
+    lines.push("## Rejected PRs (unmet demand)");
+    for (const pr of rejectedPRs) {
       lines.push(
-        `  - [${statusTag}] ${pr.title} #${pr.number}${reactionsStr}`,
+        `- [${pr.reactions} \u{1F44D}] ${pr.title} (#${pr.number}) \u2014 closed without merge`,
       );
     }
   }
@@ -276,14 +316,21 @@ export async function runEvidence(
       };
     });
 
+    const mergedPRs = prs.filter((p) => p.status === "merged").length;
+    const rejectedPRsWithDemand = prs.filter(
+      (p) => p.status === "rejected" && p.reactions > 0,
+    ).length;
+
     const summary: EvidenceSummary = {
       totalIssues: issues.length,
       uniqueUsers: uniqueUsers.size,
       totalReactions,
       relatedPRs: prs.length,
+      mergedPRs,
+      rejectedPRsWithDemand,
     };
 
-    const result: EvidenceResult = { summary, issues, prs };
+    const result: EvidenceResult = { summary, issues, workarounds, prs };
 
     // 8. Format output
     let output: string;

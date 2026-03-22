@@ -29,9 +29,10 @@ program
   .option('--no-cache', 'Skip cache, fetch fresh data')
   .option('--top <n>', 'Show only top N clusters', '0')
   .option('--min-reactions <n>', 'Minimum total reactions per cluster', '0')
+  .option('--json', 'Shorthand for --output json', false)
   .action(async (repo: string | undefined, cmdOpts: Record<string, string | boolean>) => {
     const scanOpts = {
-      output: cmdOpts.output as string,
+      output: cmdOpts.json === true ? 'json' : cmdOpts.output as string,
       limit: parseInt(cmdOpts.limit as string, 10),
       period: (cmdOpts.period as string) || "",
       minStars: parseInt(cmdOpts.minStars as string, 10),
@@ -84,9 +85,10 @@ program
   .option('--limit <n>', 'Max issues to return', '20')
   .option('--verbose', 'Show API calls and rate limit status', false)
   .option('--no-cache', 'Skip cache, fetch fresh data')
+  .option('--json', 'Shorthand for --output json', false)
   .action(async (repo: string, query: string, cmdOpts: Record<string, string | boolean>) => {
     await runEvidence(repo, query, {
-      output: cmdOpts.output as string,
+      output: cmdOpts.json === true ? 'json' : cmdOpts.output as string,
       sort: cmdOpts.sort as string,
       limit: parseInt(cmdOpts.limit as string, 10),
       verbose: cmdOpts.verbose === true,
@@ -104,9 +106,10 @@ program
   .option('--lang <language>', 'Filter by programming language')
   .option('--verbose', 'Show API calls and rate limit status', false)
   .option('--no-cache', 'Skip cache, fetch fresh data')
+  .option('--json', 'Shorthand for --output json', false)
   .action(async (cmdOpts: Record<string, string | boolean>) => {
     await runTrending({
-      output: cmdOpts.output as string,
+      output: cmdOpts.json === true ? 'json' : cmdOpts.output as string,
       top: parseInt(cmdOpts.top as string, 10) || 10,
       topic: cmdOpts.topic as string | undefined,
       lang: cmdOpts.lang as string | undefined,

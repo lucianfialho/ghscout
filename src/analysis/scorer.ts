@@ -22,6 +22,16 @@ const FRUSTRATION_KEYWORDS = [
   "doesn't work",
   "not working",
   "impossible",
+  "please fix",
+  "been waiting",
+  "any update",
+  "workaround",
+  "hacky",
+  "ugly hack",
+  "months ago",
+  "years ago",
+  "still broken",
+  "regression",
 ];
 
 /** Linearly normalize a value to 0-100 given min/max from the dataset. */
@@ -30,14 +40,19 @@ function relNormalize(value: number, min: number, max: number): number {
   return ((value - min) / (max - min)) * 100;
 }
 
-/** Count frustration keywords across all issue titles in a cluster. */
+/** Count frustration keywords across all issue titles and bodies in a cluster.
+ *  Title matches count 1.0, body matches count 0.5 (bodies are longer, more incidental matches). */
 function countFrustrationKeywords(cluster: Cluster): number {
   let count = 0;
   for (const issue of cluster.issues) {
-    const lower = issue.title.toLowerCase();
+    const lowerTitle = issue.title.toLowerCase();
+    const lowerBody = (issue.body ?? "").toLowerCase();
     for (const keyword of FRUSTRATION_KEYWORDS) {
-      if (lower.includes(keyword)) {
-        count++;
+      if (lowerTitle.includes(keyword)) {
+        count += 1.0;
+      }
+      if (lowerBody.includes(keyword)) {
+        count += 0.5;
       }
     }
   }
@@ -141,16 +156,28 @@ export function scoreCluster(
   };
 }
 
+/** Weight presets per scoring mode. */
+const WEIGHTS = {
+  single: { demand: 0.35, frequency: 0.30, frustration: 0.20, marketSize: 0, gap: 0.15 },
+  cross:  { demand: 0.30, frequency: 0.25, frustration: 0.15, marketSize: 0.15, gap: 0.15 },
+} as const;
+
 /**
  * Score all clusters with relative normalization.
  * Demand, frequency, and frustration are normalized against the min/max
  * of the current dataset so they always spread 0-100.
+ *
+ * @param mode - "single" redistributes market size weight (constant in single-repo scans),
+ *               "cross" keeps original weights (market size varies across repos).
  */
 export function scoreClusters(
   clusters: Cluster[],
   repoMeta: RepoMeta,
+  mode: "single" | "cross" = "single",
 ): ScoredCluster[] {
   if (clusters.length === 0) return [];
+
+  const w = WEIGHTS[mode];
 
   // Filter out "other" for raw calculation, score it separately
   const real = clusters.filter((c) => c.name !== "other");
@@ -192,11 +219,11 @@ export function scoreClusters(
     const gap = r.gap;
 
     const score = Math.round(
-      demand * 0.3 +
-        frequency * 0.25 +
-        frustration * 0.15 +
-        marketSize * 0.15 +
-        gap * 0.15,
+      demand * w.demand +
+        frequency * w.frequency +
+        frustration * w.frustration +
+        marketSize * w.marketSize +
+        gap * w.gap,
     );
 
     return {

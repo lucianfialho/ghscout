@@ -47,14 +47,18 @@ function makeClusters(count: number): ScoredCluster[] {
 
 describe("formatScanResult", () => {
   describe("json format", () => {
-    it("outputs valid compact JSON", () => {
+    it("outputs valid JSON with meta and clusters", () => {
       const clusters = makeClusters(3);
       const result = formatScanResult(clusters, { format: "json" });
       const parsed = JSON.parse(result);
-      expect(Array.isArray(parsed)).toBe(true);
-      expect(parsed).toHaveLength(3);
-      expect(parsed[0].name).toBe("cluster-1");
-      expect(parsed[0].score).toBe(92);
+      expect(parsed.meta).toBeDefined();
+      expect(parsed.meta.scannedAt).toBeDefined();
+      expect(new Date(parsed.meta.scannedAt).toISOString()).toBe(parsed.meta.scannedAt);
+      expect(parsed.meta.clusterCount).toBe(3);
+      expect(Array.isArray(parsed.clusters)).toBe(true);
+      expect(parsed.clusters).toHaveLength(3);
+      expect(parsed.clusters[0].name).toBe("cluster-1");
+      expect(parsed.clusters[0].score).toBe(92);
       // Ensure it's compact (no extra whitespace)
       expect(result).not.toContain("\n");
     });
@@ -63,9 +67,10 @@ describe("formatScanResult", () => {
       const clusters = makeClusters(5);
       const result = formatScanResult(clusters, { format: "json", top: 2 });
       const parsed = JSON.parse(result);
-      expect(parsed).toHaveLength(2);
-      expect(parsed[0].name).toBe("cluster-1");
-      expect(parsed[1].name).toBe("cluster-2");
+      expect(parsed.meta.clusterCount).toBe(2);
+      expect(parsed.clusters).toHaveLength(2);
+      expect(parsed.clusters[0].name).toBe("cluster-1");
+      expect(parsed.clusters[1].name).toBe("cluster-2");
     });
   });
 

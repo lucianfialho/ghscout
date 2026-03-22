@@ -205,7 +205,8 @@ describe("runOrgScan", () => {
     expect(consoleSpy).toHaveBeenCalled();
     const output = consoleSpy.mock.calls[0][0] as string;
     const parsed = JSON.parse(output);
-    expect(Array.isArray(parsed)).toBe(true);
+    expect(parsed).toHaveProperty("meta");
+    expect(Array.isArray(parsed.clusters)).toBe(true);
   });
 
   it("filters repos by min-stars", async () => {
@@ -244,7 +245,7 @@ describe("runOrgScan", () => {
 
     // repo-a has 2 "auth middleware" issues, repo-b has 2 "auth middleware" issues
     // They should merge into one cluster
-    const authCluster = parsed.find(
+    const authCluster = parsed.clusters.find(
       (c: { name: string }) =>
         c.name.includes("auth") && c.name.includes("middleware"),
     );
@@ -255,7 +256,7 @@ describe("runOrgScan", () => {
     }
 
     // Verify no duplicate cluster names
-    const names = parsed.map((c: { name: string }) => c.name);
+    const names = parsed.clusters.map((c: { name: string }) => c.name);
     const uniqueNames = new Set(names);
     expect(uniqueNames.size).toBe(names.length);
   });

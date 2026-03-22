@@ -117,12 +117,13 @@ describe("trending command", () => {
     expect(consoleSpy).toHaveBeenCalled();
     const output = consoleSpy.mock.calls[0][0];
     const parsed = JSON.parse(output);
-    expect(Array.isArray(parsed)).toBe(true);
-    expect(parsed.length).toBeGreaterThan(0);
+    expect(parsed).toHaveProperty("meta");
+    expect(Array.isArray(parsed.clusters)).toBe(true);
+    expect(parsed.clusters.length).toBeGreaterThan(0);
     // Check that clusters have expected properties
-    expect(parsed[0]).toHaveProperty("score");
-    expect(parsed[0]).toHaveProperty("issueCount");
-    expect(parsed[0]).toHaveProperty("totalReactions");
+    expect(parsed.clusters[0]).toHaveProperty("score");
+    expect(parsed.clusters[0]).toHaveProperty("issueCount");
+    expect(parsed.clusters[0]).toHaveProperty("totalReactions");
   });
 
   it("filters by topic (searches repos first, then issues)", async () => {
@@ -198,7 +199,8 @@ describe("trending command", () => {
     expect(consoleSpy).toHaveBeenCalled();
     const output = consoleSpy.mock.calls[0][0];
     const parsed = JSON.parse(output);
-    expect(Array.isArray(parsed)).toBe(true);
+    expect(parsed).toHaveProperty("meta");
+    expect(Array.isArray(parsed.clusters)).toBe(true);
   });
 
   it("filters by lang", async () => {
@@ -288,11 +290,12 @@ describe("trending command", () => {
     expect(consoleSpy).toHaveBeenCalled();
     const output = consoleSpy.mock.calls[0][0];
     const parsed = JSON.parse(output);
-    expect(Array.isArray(parsed)).toBe(true);
-    expect(parsed.length).toBeGreaterThan(0);
+    expect(parsed).toHaveProperty("meta");
+    expect(Array.isArray(parsed.clusters)).toBe(true);
+    expect(parsed.clusters.length).toBeGreaterThan(0);
 
     // Clusters should be scored (have score and breakdown)
-    for (const cluster of parsed) {
+    for (const cluster of parsed.clusters) {
       expect(cluster).toHaveProperty("score");
       expect(typeof cluster.score).toBe("number");
       expect(cluster.score).toBeGreaterThanOrEqual(0);
@@ -306,8 +309,8 @@ describe("trending command", () => {
     }
 
     // Clusters should be sorted by score descending
-    for (let i = 1; i < parsed.length; i++) {
-      expect(parsed[i - 1].score).toBeGreaterThanOrEqual(parsed[i].score);
+    for (let i = 1; i < parsed.clusters.length; i++) {
+      expect(parsed.clusters[i - 1].score).toBeGreaterThanOrEqual(parsed.clusters[i].score);
     }
   });
 
