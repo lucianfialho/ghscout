@@ -130,10 +130,10 @@ export async function searchReposByTopic(
 ): Promise<RepoMeta[]> {
   let q = `topic:${topic}`;
   if (lang) {
-    q += `+language:${lang}`;
+    q += ` language:${lang}`;
   }
   if (minStars !== undefined && minStars > 0) {
-    q += `+stars:>=${minStars}`;
+    q += ` stars:>=${minStars}`;
   }
 
   const data = await client.get<{ items: Record<string, unknown>[] }>(
